@@ -6,7 +6,7 @@ import { User } from './user';
 import { UserCardComponent } from './user-card.component';
 import { UserListComponent } from './user-list.component';
 import { UserService } from './user.service';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withXhr } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('User list', () => {
@@ -18,7 +18,7 @@ describe('User list', () => {
     TestBed.configureTestingModule({
       imports: [UserListComponent, UserCardComponent],
       providers: [
-        provideHttpClient(),
+        provideHttpClient(withXhr()),
         provideHttpClientTesting(),
         { provide: UserService, useClass: MockUserService },
         provideRouter([])

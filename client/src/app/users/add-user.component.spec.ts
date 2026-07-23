@@ -9,7 +9,7 @@ import { MockUserService } from 'src/testing/user.service.mock';
 import { AddUserComponent } from './add-user.component';
 import { UserProfileComponent } from './user-profile.component';
 import { UserService } from './user.service';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withXhr } from '@angular/common/http';
 
 describe('AddUserComponent', () => {
   let addUserComponent: AddUserComponent;
@@ -23,7 +23,7 @@ describe('AddUserComponent', () => {
         MatSnackBarModule
       ],
       providers: [
-        provideHttpClient(),
+        provideHttpClient(withXhr()),
         provideHttpClientTesting(),
         { provide: UserService, useClass: MockUserService }
       ]
@@ -281,7 +281,7 @@ describe('AddUserComponent#submitForm()', () => {
         MatSnackBarModule
       ],
       providers: [
-        provideHttpClient(),
+        provideHttpClient(withXhr()),
         provideHttpClientTesting(),
         {provide: UserService, useClass: MockUserService }, // A (more-async-tests) - provide + use class of the mock
         provideRouter([

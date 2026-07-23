@@ -1,4 +1,4 @@
-import { Component, signal, inject, Signal } from '@angular/core';
+import { Component, signal, inject, Signal, ChangeDetectionStrategy } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
 import { ActivatedRoute, ParamMap } from '@angular/router';
 import { catchError, map, switchMap } from 'rxjs/operators';
@@ -12,6 +12,7 @@ import { User } from './user';
   selector: 'app-user-profile',
   templateUrl: './user-profile.component.html',
   styleUrls: ['./user-profile.component.scss'],
+  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [UserCardComponent, MatCardModule],
 })
 export class UserProfileComponent {

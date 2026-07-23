@@ -1,4 +1,4 @@
-import { HttpClient, HttpParams, provideHttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams, provideHttpClient, withXhr } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed, waitForAsync } from '@angular/core/testing';
 import { of } from 'rxjs';
@@ -61,7 +61,7 @@ describe('UserService', () => {
     // Set up the mock handling of the HTTP requests
     TestBed.configureTestingModule({
       imports: [],
-      providers: [provideHttpClient(), provideHttpClientTesting()]
+      providers: [provideHttpClient(withXhr()), provideHttpClientTesting()]
     });
     // Construct an instance of the service with the mock
     // HTTP client.
