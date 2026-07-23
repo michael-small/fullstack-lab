@@ -55,16 +55,11 @@
     "eslint-plugin-jsdoc": "^62.5.2",
     "eslint-plugin-prefer-arrow": "1.2.3",
     "istanbul-lib-instrument": "^6.0.3",
-    "jasmine-core": "^6.1.0",
     "jasmine-spec-reporter": "~7.0.0",
-    "karma": "~6.4.4",
-    "karma-chrome-launcher": "~3.2.0",
-    "karma-coverage": "^2.2.1",
-    "karma-jasmine": "~5.1.0",
-    "karma-jasmine-html-reporter": "^2.1.0",
+    "jsdom": "^29.1.1",
     "ts-node": "^10.9.2",
     "typescript": "^6.0.3",
-    "vitest": "^4.0.8",
+    "vitest": "^4.1.10",
     "wait-on": "^9.0.4"
   }
 }

@@ -64,7 +64,10 @@
             "testing": {
               "aot": false,
               "polyfills": [
-                "src/polyfills.ts"
+                "src/polyfills.ts",
+                "zone.js",
+                "zone.js/testing",
+                "zone.js/plugins/vitest-patch"
               ]
             }
           },
@@ -97,17 +100,9 @@
           "options": {
             "tsConfig": "tsconfig.spec.json",
             "coverage": true,
-            "coverageExclude": [
-              "src/testing/**"
-            ],
-            "reporters": [
-              "default"
-            ],
-            "coverageReporters": [
-              "html",
-              "lcovonly",
-              "text-summary"
-            ],
+            "coverageExclude": ["src/testing/**"],
+            "reporters": ["default"],
+            "coverageReporters": ["html", "lcovonly", "text-summary"],
             "coverageThresholds": {
               "statements": 80,
               "branches": 80,
@@ -115,9 +110,7 @@
               "lines": 80,
               "perFile": false
             },
-            "setupFiles": [
-              "src/test.ts"
-            ],
+            "setupFiles": ["src/test.ts"],
             "buildTarget": ":build:testing",
             "runner": "vitest"
           }
