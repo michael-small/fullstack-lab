@@ -238,7 +238,7 @@ describe('UserService', () => {
           // `options.param` can return any of a broad number of types;
           // it is in fact an instance of `HttpParams`, and I need to use
           // that fact, so I'm casting it (the `as HttpParams` bit).
-          const calledHttpParams: HttpParams = options.params as HttpParams;
+          const calledHttpParams: HttpParams = options?.params as HttpParams;
           expect(mockedMethod, 'one call').toHaveBeenCalledTimes(1);
           expect(url, 'talks to the correct endpoint').toEqual(
             userService.userUrl,

@@ -40,6 +40,6 @@ describe('UserCardComponent', () => {
   });
 
   it('should be the user named Chris', () => {
-    expect(component.user().name).toEqual('Chris');
+    expect(component.user()?.name).toEqual('Chris');
   });
 });

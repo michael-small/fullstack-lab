@@ -10,9 +10,12 @@ import { UserService } from 'src/app/users/user.service';
  * that's how services are typically provided to components.
  */
 @Injectable({
-  providedIn: AppComponent
+  providedIn: AppComponent,
 })
-export class MockUserService implements Pick<UserService, 'getUsers' | 'getUserById' | 'addUser' | 'filterUsers'> {
+export class MockUserService implements Pick<
+  UserService,
+  'getUsers' | 'getUserById' | 'addUser' | 'filterUsers'
+> {
   static testUsers: User[] = [
     {
       _id: 'chris_id',
@@ -21,7 +24,8 @@ export class MockUserService implements Pick<UserService, 'getUsers' | 'getUserB
       company: 'UMM',
       email: 'chris@this.that',
       role: 'admin',
-      avatar: 'https://gravatar.com/avatar/8c9616d6cc5de638ea6920fb5d65fc6c?d=identicon'
+      avatar:
+        'https://gravatar.com/avatar/8c9616d6cc5de638ea6920fb5d65fc6c?d=identicon',
     },
     {
       _id: 'pat_id',
@@ -30,7 +34,8 @@ export class MockUserService implements Pick<UserService, 'getUsers' | 'getUserB
       company: 'IBM',
       email: 'pat@something.com',
       role: 'editor',
-      avatar: 'https://gravatar.com/avatar/b42a11826c3bde672bce7e06ad729d44?d=identicon'
+      avatar:
+        'https://gravatar.com/avatar/b42a11826c3bde672bce7e06ad729d44?d=identicon',
     },
     {
       _id: 'jamie_id',
@@ -39,15 +44,20 @@ export class MockUserService implements Pick<UserService, 'getUsers' | 'getUserB
       company: 'Frogs, Inc.',
       email: 'jamie@frogs.com',
       role: 'viewer',
-      avatar: 'https://gravatar.com/avatar/d4a6c71dd9470ad4cf58f78c100258bf?d=identicon'
-    }
+      avatar:
+        'https://gravatar.com/avatar/d4a6c71dd9470ad4cf58f78c100258bf?d=identicon',
+    },
   ];
 
   // skipcq: JS-0105
   // It's OK that the `_filters` argument isn't used here, so we'll disable
   // this warning for just his function.
   /* eslint-disable @typescript-eslint/no-unused-vars */
-  getUsers(_filters: { role?: UserRole; age?: number; company?: string }): Observable<User[]> {
+  getUsers(_filters: {
+    role?: UserRole;
+    age?: number;
+    company?: string;
+  }): Observable<User[]> {
     // Our goal here isn't to test (and thus rewrite) the service, so we'll
     // keep it simple and just return the test users regardless of what
     // filters are passed in.
@@ -68,20 +78,23 @@ export class MockUserService implements Pick<UserService, 'getUsers' | 'getUserB
     } else if (id === MockUserService.testUsers[1]._id) {
       return of(MockUserService.testUsers[1]);
     } else {
-      return of(null);
+      return of<User>();
     }
   }
 
   addUser(newUser: Partial<User>): Observable<string> {
     // Send post request to add a new user with the user data as the body.
     // `res.id` should be the MongoDB ID of the newly added `User`.
-    return of('')
+    return of('');
   }
 
-  filterUsers(users: User[], filters: {
-    name?: string;
-    company?: string;
-  }): User[] {
-    return []
+  filterUsers(
+    users: User[],
+    filters: {
+      name?: string;
+      company?: string;
+    },
+  ): User[] {
+    return [];
   }
 }

@@ -244,7 +244,7 @@ describe('AddUserComponent', () => {
         'name';
       addUserComponent.addUserForm
         .get(controlName)
-        .setErrors({ required: true });
+        ?.setErrors({ required: true });
       expect(addUserComponent.getErrorMessage(controlName)).toEqual(
         'Name is required',
       );
@@ -255,13 +255,13 @@ describe('AddUserComponent', () => {
       controlName = 'email';
       addUserComponent.addUserForm
         .get(controlName)
-        .setErrors({ required: true });
+        ?.setErrors({ required: true });
       expect(addUserComponent.getErrorMessage(controlName)).toEqual(
         'Email is required',
       );
 
       controlName = 'email';
-      addUserComponent.addUserForm.get(controlName).setErrors({ email: true });
+      addUserComponent.addUserForm.get(controlName)?.setErrors({ email: true });
       expect(addUserComponent.getErrorMessage(controlName)).toEqual(
         'Email must be formatted properly',
       );
@@ -275,7 +275,7 @@ describe('AddUserComponent', () => {
         'name';
       addUserComponent.addUserForm
         .get(controlName)
-        .setErrors({ unknown: true });
+        ?.setErrors({ unknown: true });
       expect(addUserComponent.getErrorMessage(controlName)).toEqual(
         'Unknown error',
       );
