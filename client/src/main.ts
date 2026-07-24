@@ -1,6 +1,10 @@
 import { LayoutModule } from '@angular/cdk/layout';
-import { provideHttpClient, withInterceptorsFromDi, withXhr } from '@angular/common/http';
-import { enableProdMode, importProvidersFrom, provideZoneChangeDetection } from '@angular/core';
+import {
+  provideHttpClient,
+  withInterceptorsFromDi,
+  withXhr,
+} from '@angular/common/http';
+import { enableProdMode, importProvidersFrom } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -49,9 +53,15 @@ if (environment.production) {
 
 bootstrapApplication(AppComponent, {
   providers: [
-    provideZoneChangeDetection(),importProvidersFrom(BrowserModule, AppRoutingModule, FormsModule, ReactiveFormsModule, MATERIAL_MODULES, LayoutModule),
+    importProvidersFrom(
+      BrowserModule,
+      AppRoutingModule,
+      FormsModule,
+      ReactiveFormsModule,
+      MATERIAL_MODULES,
+      LayoutModule,
+    ),
     provideAnimations(),
-    provideHttpClient(withXhr(), withInterceptorsFromDi())
-  ]
-})
-  .catch(err => console.error(err));
+    provideHttpClient(withXhr(), withInterceptorsFromDi()),
+  ],
+}).catch((err) => console.error(err));

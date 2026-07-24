@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { Observable } from 'rxjs';
 import { MockUserService } from 'src/testing/user.service.mock';
@@ -27,14 +27,14 @@ describe('User list', () => {
     });
   });
 
-  beforeEach(waitForAsync(() => {
+  beforeEach(async () => {
     TestBed.compileComponents().then(() => {
       fixture = TestBed.createComponent(UserListComponent);
       userList = fixture.componentInstance;
       userService = TestBed.inject(UserService);
       fixture.detectChanges();
     });
-  }));
+  });
 
   it('should create the component', () => {
     expect(userList).toBeTruthy();
@@ -93,7 +93,7 @@ describe('Misbehaving User List', () => {
 
   // Construct the `userList` used for the testing in the `it` statement
   // below.
-  beforeEach(waitForAsync(() => {
+  beforeEach(async () => {
     TestBed.configureTestingModule({
       imports: [UserListComponent],
       // providers:    [ UserService ]  // NO! Don't provide the real service!
@@ -106,7 +106,7 @@ describe('Misbehaving User List', () => {
         provideRouter([]),
       ],
     }).compileComponents();
-  }));
+  });
 
   beforeEach(() => {
     fixture = TestBed.createComponent(UserListComponent);

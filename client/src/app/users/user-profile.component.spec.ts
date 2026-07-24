@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { throwError } from 'rxjs';
 import { ActivatedRouteStub } from '../../testing/activated-route-stub';
@@ -19,7 +19,9 @@ describe('UserProfileComponent', () => {
     id: chrisId,
   });
 
-  beforeEach(waitForAsync(() => {
+  const wait = (ms = 0) => new Promise((resolve) => setTimeout(resolve, ms));
+
+  beforeEach(async () => {
     TestBed.configureTestingModule({
       imports: [UserProfileComponent],
       providers: [
@@ -27,7 +29,7 @@ describe('UserProfileComponent', () => {
         { provide: ActivatedRoute, useValue: activatedRoute },
       ],
     }).compileComponents();
-  }));
+  });
 
   beforeEach(() => {
     fixture = TestBed.createComponent(UserProfileComponent);
@@ -63,22 +65,24 @@ describe('UserProfileComponent', () => {
     expect(component.user()).toEqual(expectedUser);
   });
 
-  it('should have `null` for the user for a bad ID', () => {
+  it('should have `null` for the user for a bad ID', async () => {
     activatedRoute.setParamMap({ id: 'badID' });
 
+    await wait();
+    await fixture.whenStable();
     // If the given ID doesn't map to a user, we expect the service
     // to return `null`, so we would expect the component's user
     // to also be `null`.
     expect(component.user()).toBeNull();
   });
 
-  it('should set error data on observable error', () => {
+  it('should set error data on observable error', async () => {
     const mockError = {
       message: 'Test Error',
       error: { title: 'Error Title' },
     };
 
-    // "Spy" on the `.addUser()` method in the user service. Here we basically
+    // "Spy" on the `.getUserById()` method in the user service. Here we basically
     // intercept any calls to that method and return the error response
     // defined above.
     const getUserSpy = vi
@@ -86,6 +90,8 @@ describe('UserProfileComponent', () => {
       .mockReturnValue(throwError(() => mockError));
 
     activatedRoute.setParamMap({ id: chrisId });
+
+    await fixture.whenStable();
 
     expect(component.error()).toEqual({
       help: 'There was a problem loading the user – try again.',

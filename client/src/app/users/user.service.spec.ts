@@ -9,7 +9,7 @@ import {
   HttpTestingController,
   provideHttpClientTesting,
 } from '@angular/common/http/testing';
-import { TestBed, waitForAsync } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { User } from './user';
 import { UserService } from './user.service';
@@ -91,7 +91,7 @@ describe('UserService', () => {
   });
 
   describe('When getCompanies() is called with no parameters', () => {
-    it('calls `api/usersByCompany`', waitForAsync(() => {
+    it('calls `api/usersByCompany`', async () => {
       // Mock the `httpClient.get()` method, so that instead of making an HTTP request,
       // it just returns our test data.
       const mockedMethod = vi
@@ -107,7 +107,7 @@ describe('UserService', () => {
           'talks to the correct endpoint',
         ).toHaveBeenCalledWith(userService.usersByCompanyUrl);
       });
-    }));
+    });
   });
 
   describe('When getUsers() is called with no parameters', () => {
@@ -128,7 +128,7 @@ describe('UserService', () => {
      * about the returned value). Since we don't use the returned value in this test,
      * It might also be fine to not bother making the mock return it.
      */
-    it('calls `api/users`', waitForAsync(() => {
+    it('calls `api/users`', async () => {
       // Mock the `httpClient.get()` method, so that instead of making an HTTP request,
       // it just returns our test data.
       const mockedMethod = vi
@@ -155,7 +155,7 @@ describe('UserService', () => {
           params: new HttpParams(),
         });
       });
-    }));
+    });
   });
 
   describe('When getUsers() is called with parameters, it correctly forms the HTTP request (Javalin/Server filtering)', () => {
@@ -274,7 +274,7 @@ describe('UserService', () => {
      * about the returned value). Since we don't use the returned value in this test,
      * It might also be fine to not bother making the mock return it.
      */
-    it('calls api/users/id with the correct ID', waitForAsync(() => {
+    it('calls api/users/id with the correct ID', async () => {
       // We're just picking a User "at random" from our little
       // set of Users up at the top.
       const targetUser: User = testUsers[1];
@@ -301,7 +301,7 @@ describe('UserService', () => {
           'talks to the correct endpoint',
         ).toHaveBeenCalledWith(`${userService.userUrl}/${targetId}`);
       });
-    }));
+    });
   });
 
   describe('Filtering on the client using `filterUsers()` (Angular/Client filtering)', () => {
@@ -361,7 +361,7 @@ describe('UserService', () => {
   });
 
   describe('Adding a user using `addUser()`', () => {
-    it('talks to the right endpoint and is called once', waitForAsync(() => {
+    it('talks to the right endpoint and is called once', async () => {
       const user_id = 'pat_id';
       const expected_http_response = { id: user_id };
 
@@ -379,6 +379,6 @@ describe('UserService', () => {
           'talks to the correct endpoint',
         ).toHaveBeenCalledWith(userService.userUrl, testUsers[1]);
       });
-    }));
+    });
   });
 });
