@@ -16,7 +16,7 @@ export class MockUserService implements Pick<
   UserService,
   'getUsers' | 'getUserById' | 'addUser' | 'filterUsers'
 > {
-  static testUsers: User[] = [
+  static testUsers = [
     {
       _id: 'chris_id',
       name: 'Chris',
@@ -47,7 +47,7 @@ export class MockUserService implements Pick<
       avatar:
         'https://gravatar.com/avatar/d4a6c71dd9470ad4cf58f78c100258bf?d=identicon',
     },
-  ];
+  ] as const satisfies User[];
 
   // skipcq: JS-0105
   // It's OK that the `_filters` argument isn't used here, so we'll disable

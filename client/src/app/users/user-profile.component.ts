@@ -25,6 +25,9 @@ export class UserProfileComponent {
   private route = inject(ActivatedRoute);
   private userService = inject(UserService);
 
+  // The `error` will initially have empty strings for all its components.
+  error = signal({ help: '', httpResponse: '', message: '' });
+
   user: Signal<User | undefined> = toSignal(
     this.route.paramMap.pipe(
       // Map the paramMap into the id
@@ -50,6 +53,4 @@ export class UserProfileComponent {
       // finalize(() => console.log('We got a new user, and we are done!'))
     ),
   );
-  // The `error` will initially have empty strings for all its components.
-  error = signal({ help: '', httpResponse: '', message: '' });
 }
