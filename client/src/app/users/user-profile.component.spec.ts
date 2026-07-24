@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { throwError } from 'rxjs';
@@ -20,9 +21,7 @@ describe('UserProfileComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      imports: [
-        UserProfileComponent,
-      ],
+      imports: [UserProfileComponent],
       providers: [
         { provide: UserService, useClass: MockUserService },
         { provide: ActivatedRoute, useValue: activatedRoute },
@@ -82,9 +81,9 @@ describe('UserProfileComponent', () => {
     // "Spy" on the `.addUser()` method in the user service. Here we basically
     // intercept any calls to that method and return the error response
     // defined above.
-    const getUserSpy = spyOn(userService, 'getUserById').and.returnValue(
-      throwError(() => mockError)
-    );
+    const getUserSpy = vi
+      .spyOn(userService, 'getUserById')
+      .mockReturnValue(throwError(() => mockError));
 
     activatedRoute.setParamMap({ id: chrisId });
 

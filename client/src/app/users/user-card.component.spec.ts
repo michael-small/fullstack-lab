@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it } from 'vitest';
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { UserCardComponent } from './user-card.component';
 import { User } from './user';
@@ -9,11 +10,8 @@ describe('UserCardComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      imports: [
-        UserCardComponent
-      ]
-    })
-      .compileComponents();
+      imports: [UserCardComponent],
+    }).compileComponents();
   }));
 
   beforeEach(() => {
@@ -26,7 +24,8 @@ describe('UserCardComponent', () => {
       company: 'UMM',
       email: 'chris@this.that',
       role: 'admin',
-      avatar: 'https://gravatar.com/avatar/8c9616d6cc5de638ea6920fb5d65fc6c?d=identicon'
+      avatar:
+        'https://gravatar.com/avatar/8c9616d6cc5de638ea6920fb5d65fc6c?d=identicon',
     };
     fixture.componentRef.setInput('user', expectedUser);
     fixture.detectChanges();

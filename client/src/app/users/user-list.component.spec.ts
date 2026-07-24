@@ -1,3 +1,4 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { Observable } from 'rxjs';
@@ -21,7 +22,7 @@ describe('User list', () => {
         provideHttpClient(withXhr()),
         provideHttpClientTesting(),
         { provide: UserService, useClass: MockUserService },
-        provideRouter([])
+        provideRouter([]),
       ],
     });
   });
@@ -46,14 +47,14 @@ describe('User list', () => {
   });
 
   it('should call getUsers() when userRole signal changes', () => {
-    const spy = spyOn(userService, 'getUsers').and.callThrough();
+    const spy = vi.spyOn(userService, 'getUsers');
     userList.userRole.set('admin');
     fixture.detectChanges();
     expect(spy).toHaveBeenCalledWith({ role: 'admin', age: undefined });
   });
 
   it('should call getUsers() when userAge signal changes', () => {
-    const spy = spyOn(userService, 'getUsers').and.callThrough();
+    const spy = vi.spyOn(userService, 'getUsers');
     userList.userAge.set(25);
     fixture.detectChanges();
     expect(spy).toHaveBeenCalledWith({ role: undefined, age: 25 });
@@ -86,7 +87,7 @@ describe('Misbehaving User List', () => {
         new Observable((observer) => {
           observer.error('getUsers() Observer generates an error');
         }),
-      filterUsers: () => []
+      filterUsers: () => [],
     };
   });
 
@@ -94,17 +95,17 @@ describe('Misbehaving User List', () => {
   // below.
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      imports: [
-        UserListComponent
-      ],
+      imports: [UserListComponent],
       // providers:    [ UserService ]  // NO! Don't provide the real service!
       // Provide a test-double instead
-      providers: [{
-        provide: UserService,
-        useValue: userServiceStub
-      }, provideRouter([])],
-    })
-      .compileComponents();
+      providers: [
+        {
+          provide: UserService,
+          useValue: userServiceStub,
+        },
+        provideRouter([]),
+      ],
+    }).compileComponents();
   }));
 
   beforeEach(() => {
@@ -116,14 +117,15 @@ describe('Misbehaving User List', () => {
   it("generates an error if we don't set up a UserListService", () => {
     // If the service fails, we expect the `serverFilteredUsers` signal to
     // be an empty array of users.
-    expect(userList.serverFilteredUsers())
-      .withContext("service can't give values to the list if it's not there")
-      .toEqual([]);
+    expect(
+      userList.serverFilteredUsers(),
+      "service can't give values to the list if it's not there",
+    ).toEqual([]);
     // We also expect the `errMsg` signal to contain the "Problem contacting…"
     // error message. (It's arguably a bit fragile to expect something specific
     // like this; maybe we just want to expect it to be non-empty?)
-    expect(userList.errMsg())
-      .withContext('the error message will be')
-      .toContain('Problem contacting the server – Error Code:');
+    expect(userList.errMsg(), 'the error message will be').toContain(
+      'Problem contacting the server – Error Code:',
+    );
   });
 });

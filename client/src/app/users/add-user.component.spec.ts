@@ -1,6 +1,17 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Location } from '@angular/common';
-import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { ComponentFixture, TestBed, fakeAsync, flush, tick, waitForAsync } from '@angular/core/testing';
+import {
+  HttpTestingController,
+  provideHttpClientTesting,
+} from '@angular/common/http/testing';
+import {
+  ComponentFixture,
+  TestBed,
+  fakeAsync,
+  flush,
+  tick,
+  waitForAsync,
+} from '@angular/core/testing';
 import { AbstractControl, FormGroup } from '@angular/forms';
 import { provideRouter, Router } from '@angular/router';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
@@ -18,18 +29,17 @@ describe('AddUserComponent', () => {
 
   beforeEach(waitForAsync(() => {
     TestBed.configureTestingModule({
-      imports: [
-        AddUserComponent,
-        MatSnackBarModule
-      ],
+      imports: [AddUserComponent, MatSnackBarModule],
       providers: [
         provideHttpClient(withXhr()),
         provideHttpClientTesting(),
-        { provide: UserService, useClass: MockUserService }
-      ]
-    }).compileComponents().catch(error => {
-      expect(error).toBeNull();
-    });
+        { provide: UserService, useClass: MockUserService },
+      ],
+    })
+      .compileComponents()
+      .catch((error) => {
+        expect(error).toBeNull();
+      });
   }));
 
   beforeEach(() => {
@@ -230,29 +240,45 @@ describe('AddUserComponent', () => {
       // The type statement is needed to ensure that `controlName` isn't just any
       // random string, but rather one of the keys of the `addUserValidationMessages`
       // map in the component.
-      let controlName: keyof typeof addUserComponent.addUserValidationMessages = 'name';
-      addUserComponent.addUserForm.get(controlName).setErrors({'required': true});
-      expect(addUserComponent.getErrorMessage(controlName)).toEqual('Name is required');
+      let controlName: keyof typeof addUserComponent.addUserValidationMessages =
+        'name';
+      addUserComponent.addUserForm
+        .get(controlName)
+        .setErrors({ required: true });
+      expect(addUserComponent.getErrorMessage(controlName)).toEqual(
+        'Name is required',
+      );
 
       // We don't need the type statement here because we're not using the
       // same (previously typed) variable. We could use a `let` and the type statement
       // if we wanted to create a new variable, though.
       controlName = 'email';
-      addUserComponent.addUserForm.get(controlName).setErrors({'required': true});
-      expect(addUserComponent.getErrorMessage(controlName)).toEqual('Email is required');
+      addUserComponent.addUserForm
+        .get(controlName)
+        .setErrors({ required: true });
+      expect(addUserComponent.getErrorMessage(controlName)).toEqual(
+        'Email is required',
+      );
 
       controlName = 'email';
-      addUserComponent.addUserForm.get(controlName).setErrors({'email': true});
-      expect(addUserComponent.getErrorMessage(controlName)).toEqual('Email must be formatted properly');
+      addUserComponent.addUserForm.get(controlName).setErrors({ email: true });
+      expect(addUserComponent.getErrorMessage(controlName)).toEqual(
+        'Email must be formatted properly',
+      );
     });
 
     it('should return "Unknown error" if no error message is found', () => {
       // The type statement is needed to ensure that `controlName` isn't just any
       // random string, but rather one of the keys of the `addUserValidationMessages`
       // map in the component.
-      const controlName: keyof typeof addUserComponent.addUserValidationMessages = 'name';
-      addUserComponent.addUserForm.get(controlName).setErrors({'unknown': true});
-      expect(addUserComponent.getErrorMessage(controlName)).toEqual('Unknown error');
+      const controlName: keyof typeof addUserComponent.addUserValidationMessages =
+        'name';
+      addUserComponent.addUserForm
+        .get(controlName)
+        .setErrors({ unknown: true });
+      expect(addUserComponent.getErrorMessage(controlName)).toEqual(
+        'Unknown error',
+      );
     });
   });
 });
@@ -276,20 +302,18 @@ describe('AddUserComponent#submitForm()', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [
-        AddUserComponent,
-        MatSnackBarModule
-      ],
+      imports: [AddUserComponent, MatSnackBarModule],
       providers: [
         provideHttpClient(withXhr()),
         provideHttpClientTesting(),
-        {provide: UserService, useClass: MockUserService }, // A (more-async-tests) - provide + use class of the mock
-        provideRouter([
-          { path: 'users/1', component: UserProfileComponent }
-        ])]
-    }).compileComponents().catch(error => {
-      expect(error).toBeNull();
-    });
+        { provide: UserService, useClass: MockUserService }, // A (more-async-tests) - provide + use class of the mock
+        provideRouter([{ path: 'users/1', component: UserProfileComponent }]),
+      ],
+    })
+      .compileComponents()
+      .catch((error) => {
+        expect(error).toBeNull();
+      });
   });
 
   beforeEach(() => {
@@ -329,7 +353,9 @@ describe('AddUserComponent#submitForm()', () => {
     // `.addUser()` would typically generate. Note also that the particular values
     // we set up in our form (e.g., 'Chris Smith') are actually ignored
     // thanks to our `spyOn()` call.
-    const addUserSpy = spyOn(userService, 'addUser').and.returnValue(of('1'));
+    const addUserSpy = vi
+      .spyOn(userService, 'addUser')
+      .mockReturnValue(of('1'));
     component.submitForm();
     // Check that `.addUser()` was called with the form's values which we set
     // up above.
@@ -356,9 +382,9 @@ describe('AddUserComponent#submitForm()', () => {
     // "Spy" on the `.addUser()` method in the user service. Here we basically
     // intercept any calls to that method and return the error response
     // defined above.
-    const addUserSpy = spyOn(userService, 'addUser')
-      .and
-      .returnValue(throwError(() => errorResponse));
+    const addUserSpy = vi
+      .spyOn(userService, 'addUser')
+      .mockReturnValue(throwError(() => errorResponse));
     component.submitForm();
     // Check that `.addUser()` was called with the form's values which we set
     // up above.
@@ -366,7 +392,6 @@ describe('AddUserComponent#submitForm()', () => {
     // Confirm that we're still at the same path.
     expect(location.path()).toBe(path);
   });
-
 
   it('should call addUser() and handle error response for illegal user', () => {
     // Save the original path so we can check that it doesn't change.
@@ -376,9 +401,9 @@ describe('AddUserComponent#submitForm()', () => {
     // "Spy" on the `.addUser()` method in the user service. Here we basically
     // intercept any calls to that method and return the error response
     // defined above.
-    const addUserSpy = spyOn(userService, 'addUser')
-      .and
-      .returnValue(throwError(() => errorResponse));
+    const addUserSpy = vi
+      .spyOn(userService, 'addUser')
+      .mockReturnValue(throwError(() => errorResponse));
     component.submitForm();
     // Check that `.addUser()` was called with the form's values which we set
     // up above.
@@ -395,9 +420,9 @@ describe('AddUserComponent#submitForm()', () => {
     // "Spy" on the `.addUser()` method in the user service. Here we basically
     // intercept any calls to that method and return the error response
     // defined above.
-    const addUserSpy = spyOn(userService, 'addUser')
-      .and
-      .returnValue(throwError(() => errorResponse));
+    const addUserSpy = vi
+      .spyOn(userService, 'addUser')
+      .mockReturnValue(throwError(() => errorResponse));
     component.submitForm();
     // Check that `.addUser()` was called with the form's values which we set
     // up above.
