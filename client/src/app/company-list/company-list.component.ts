@@ -1,4 +1,9 @@
-import { Component, Signal, inject, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  Signal,
+  inject,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { CompanyCardComponent } from '../company-card/company-card.component';
 import { UserService } from '../users/user.service';
@@ -9,10 +14,12 @@ import { Company } from './company';
   imports: [CompanyCardComponent],
   templateUrl: './company-list.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
-  styleUrl: './company-list.component.scss'
+  styleUrl: './company-list.component.scss',
 })
 export class CompanyListComponent {
   private userService = inject(UserService);
 
-  companies: Signal<Company[]> = toSignal(this.userService.getCompanies());
+  companies: Signal<Company[]> = toSignal(this.userService.getCompanies(), {
+    initialValue: [],
+  });
 }

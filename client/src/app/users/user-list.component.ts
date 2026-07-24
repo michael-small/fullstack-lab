@@ -1,4 +1,10 @@
-import { Component, computed, signal, inject, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  computed,
+  signal,
+  inject,
+  ChangeDetectionStrategy,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
@@ -91,7 +97,7 @@ export class UserListComponent {
           this.userService.getUsers({
             role,
             age,
-          })
+          }),
         ),
         // `catchError` is used to handle errors that might occur in the pipeline. In this case `userService.getUsers()`
         // can return errors if, for example, the server is down or returns an error. This catches those errors, and
@@ -99,10 +105,10 @@ export class UserListComponent {
         catchError((err) => {
           if (!(err.error instanceof ErrorEvent)) {
             this.errMsg.set(
-              `Problem contacting the server – Error Code: ${err.status}\nMessage: ${err.message}`
+              `Problem contacting the server – Error Code: ${err.status}\nMessage: ${err.message}`,
             );
           }
-          this.snackBar.open(this.errMsg(), 'OK', { duration: 6000 });
+          this.snackBar.open(this.errMsg() ?? '', 'OK', { duration: 6000 });
           // `catchError` needs to return the same type. `of` makes an observable of the same type, and makes the array still empty
           return of<User[]>([]);
         }),
@@ -112,8 +118,9 @@ export class UserListComponent {
           // You don't want to leave code like this in the
           // production system, but it can be useful in debugging.
           // console.log('Users were filtered on the server')
-        })
-      )
+        }),
+      ),
+      { initialValue: [] },
     );
 
   // No need for fancy RXJS stuff. We do the fancy RXJS stuff where we call `toSignal`, i.e., up in

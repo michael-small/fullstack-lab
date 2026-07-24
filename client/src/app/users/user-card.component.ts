@@ -11,10 +11,15 @@ import { User } from './user';
   templateUrl: './user-card.component.html',
   styleUrls: ['./user-card.component.scss'],
   changeDetection: ChangeDetectionStrategy.Eager,
-  imports: [MatCardModule, MatButtonModule, MatListModule, MatIconModule, RouterLink]
+  imports: [
+    MatCardModule,
+    MatButtonModule,
+    MatListModule,
+    MatIconModule,
+    RouterLink,
+  ],
 })
 export class UserCardComponent {
-
-  user = input.required<User>();
+  user = input.required<User | undefined>();
   simple = input(false);
 }

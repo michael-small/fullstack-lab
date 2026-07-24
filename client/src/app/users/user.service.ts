@@ -11,7 +11,7 @@ import { Company } from '../company-list/company';
  * about `Users` from the server.
  */
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class UserService {
   // The private `HttpClient` is *injected* into the service
@@ -48,7 +48,11 @@ export class UserService {
    *  from the server after a possibly substantial delay (because we're
    *  contacting a remote server over the Internet).
    */
-  getUsers(filters?: { role?: UserRole; age?: number; company?: string }): Observable<User[]> {
+  getUsers(filters?: {
+    role?: UserRole;
+    age?: number;
+    company?: string;
+  }): Observable<User[]> {
     // `HttpParams` is essentially just a map used to hold key-value
     // pairs that are then encoded as "?key1=value1&key2=value2&…" in
     // the URL when we make the call to `.get()` below.
@@ -95,19 +99,28 @@ export class UserService {
    * @param filters the map of key-value pairs used for the filtering
    * @returns an array of `Users` matching the given filters
    */
-  filterUsers(users: User[], filters: { name?: string; company?: string }): User[] { // skipcq: JS-0105
+  filterUsers(
+    users: User[],
+    filters: { name?: string; company?: string },
+  ): User[] {
+    // skipcq: JS-0105
     let filteredUsers = users;
 
     // Filter by name
     if (filters.name) {
       filters.name = filters.name.toLowerCase();
-      filteredUsers = filteredUsers.filter(user => user.name.toLowerCase().indexOf(filters.name) !== -1);
+      filteredUsers = filteredUsers.filter(
+        (user) => user.name.toLowerCase().indexOf(filters.name ?? '') !== -1,
+      );
     }
 
     // Filter by company
     if (filters.company) {
       filters.company = filters.company.toLowerCase();
-      filteredUsers = filteredUsers.filter(user => user.company.toLowerCase().indexOf(filters.company) !== -1);
+      filteredUsers = filteredUsers.filter(
+        (user) =>
+          user.company.toLowerCase().indexOf(filters.company ?? '') !== -1,
+      );
     }
 
     return filteredUsers;
@@ -120,6 +133,8 @@ export class UserService {
   addUser(newUser: Partial<User>): Observable<string> {
     // Send post request to add a new user with the user data as the body.
     // `res.id` should be the MongoDB ID of the newly added `User`.
-    return this.httpClient.post<{id: string}>(this.userUrl, newUser).pipe(map(response => response.id));
+    return this.httpClient
+      .post<{ id: string }>(this.userUrl, newUser)
+      .pipe(map((response) => response.id));
   }
 }

@@ -2,6 +2,7 @@
   "compileOnSave": false,
   "compilerOptions": {
     "baseUrl": "./",
+    "ignoreDeprecations": "6.0",
     "outDir": "./dist/out-tsc",
     "sourceMap": true,
     "esModuleInterop": true,
@@ -14,9 +15,7 @@
     "useDefineForClassFields": false,
     "skipLibCheck": true
   },
-  "exclude": [
-    "./cypress.config.ts"
-  ],
+  "exclude": ["./cypress.config.ts"],
   "angularCompilerOptions": {
     "strictInjectionParameters": true,
     "strictInputAccessModifiers": true,
@@ -30,7 +29,7 @@
         "optionalChainNotNullable": "error",
         "interpolatedSignalNotInvoked": "error",
         "uninvokedFunctionInEventBinding": "error",
-        "unusedStandaloneImports": "warning",
+        "unusedStandaloneImports": "warning"
       }
     }
   }
