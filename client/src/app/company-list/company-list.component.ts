@@ -13,7 +13,6 @@ import { Company } from './company';
   selector: 'app-company-list',
   imports: [CompanyCardComponent],
   templateUrl: './company-list.component.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './company-list.component.scss',
 })
 export class CompanyListComponent {

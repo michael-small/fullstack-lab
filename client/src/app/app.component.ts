@@ -10,8 +10,16 @@ import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
-  changeDetection: ChangeDetectionStrategy.Eager,
-  imports: [MatSidenavModule, MatToolbarModule, MatListModule, RouterLink, RouterLinkActive, MatIconModule, MatButtonModule, RouterOutlet]
+  imports: [
+    MatSidenavModule,
+    MatToolbarModule,
+    MatListModule,
+    RouterLink,
+    RouterLinkActive,
+    MatIconModule,
+    MatButtonModule,
+    RouterOutlet,
+  ],
 })
 export class AppComponent {
   title = 'CSCI 3601 Iteration Template';

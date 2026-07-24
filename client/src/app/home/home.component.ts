@@ -6,9 +6,6 @@ import { MatCardModule } from '@angular/material/card';
   templateUrl: 'home.component.html',
   styleUrls: ['./home.component.scss'],
   providers: [],
-  changeDetection: ChangeDetectionStrategy.Eager,
-  imports: [MatCardModule]
+  imports: [MatCardModule],
 })
-export class HomeComponent {
-
-}
+export class HomeComponent {}

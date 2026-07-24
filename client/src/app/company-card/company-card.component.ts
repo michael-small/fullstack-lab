@@ -18,7 +18,6 @@ import {
     MatCardContent,
   ],
   templateUrl: './company-card.component.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './company-card.component.scss',
 })
 export class CompanyCardComponent {
