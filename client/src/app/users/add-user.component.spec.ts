@@ -329,11 +329,13 @@ describe('AddUserComponent#submitForm()', () => {
     // We don't actually have to do this, but it does mean that when we
     // check that `submitForm()` is called with the right arguments below,
     // we have some reason to believe that that wasn't passing "by accident".
-    component.addUserForm.controls.name.setValue('Chris Smith');
-    component.addUserForm.controls.age.setValue(27);
-    component.addUserForm.controls.company.setValue('Ohmnet');
-    component.addUserForm.controls.email.setValue('this@that.com');
-    component.addUserForm.controls.role.setValue('admin');
+    component.addUserForm.patchValue({
+      name: 'Chris Smith',
+      age: 27,
+      company: 'Ohmnet',
+      email: 'this@that.com',
+      role: 'admin',
+    });
   });
 
   // The `fakeAsync()` wrapper is necessary because the `submitForm()` method
