@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, Service } from '@angular/core';
 import { Observable, of } from 'rxjs';
 import { AppComponent } from 'src/app/app.component';
 import { User, UserRole } from '../app/users/user';
@@ -9,9 +9,7 @@ import { UserService } from 'src/app/users/user.service';
  * without having to create an actual service. It needs to be `Injectable` since
  * that's how services are typically provided to components.
  */
-@Injectable({
-  providedIn: AppComponent,
-})
+@Service()
 export class MockUserService implements Pick<
   UserService,
   'getUsers' | 'getUserById' | 'addUser' | 'filterUsers'

@@ -1,5 +1,5 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
+import { Injectable, Service, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
@@ -10,9 +10,7 @@ import { Company } from '../company-list/company';
  * Service that provides the interface for getting information
  * about `Users` from the server.
  */
-@Injectable({
-  providedIn: 'root',
-})
+@Service()
 export class UserService {
   // The private `HttpClient` is *injected* into the service
   // by the Angular framework. This allows the system to create
