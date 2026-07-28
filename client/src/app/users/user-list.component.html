@@ -72,7 +72,7 @@
       @case ('card') {
       <div class="user-cards-container flex-row gap-8 flex-wrap">
         @for (user of filteredUsers(); track user._id) {
-        <app-user-card [simple]="true" class="user-card" [user]="user"></app-user-card>
+        <app-user-card [simple]="true" class="user-card" [user]="user" />
         }
       </div>
       }
