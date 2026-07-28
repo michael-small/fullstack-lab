@@ -9,16 +9,10 @@ import { CompanyListComponent } from './company-list/company-list.component';
 // Note that the 'users/new' route needs to come before 'users/:id'.
 // If 'users/:id' came first, it would accidentally catch requests to
 // 'users/new'; the router would just think that the string 'new' is a user ID.
-const routes: Routes = [
-  {path: '', component: HomeComponent, title: 'Home'},
-  {path: 'users', component: UserListComponent, title: 'Users'},
-  {path: 'users/new', component: AddUserComponent, title: 'Add User'},
-  {path: 'users/:id', component: UserProfileComponent, title: 'User Profile'},
-  {path: 'companies', component: CompanyListComponent, title: 'Companies'}
-];
-
-@NgModule({
-  imports: [RouterModule.forRoot(routes)],
-  exports: [RouterModule]
-})
-export class AppRoutingModule { }
+export const routes = [
+  { path: '', component: HomeComponent, title: 'Home' },
+  { path: 'users', component: UserListComponent, title: 'Users' },
+  { path: 'users/new', component: AddUserComponent, title: 'Add User' },
+  { path: 'users/:id', component: UserProfileComponent, title: 'User Profile' },
+  { path: 'companies', component: CompanyListComponent, title: 'Companies' },
+] as const satisfies Routes;
