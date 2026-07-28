@@ -19,6 +19,7 @@ if (environment.production) {
 bootstrapApplication(AppComponent, {
   providers: [
     provideRouter(routes),
+    // TODO - remove this and the dependency once I have the explanation hashed out
     provideAnimations(),
     provideHttpClient(withXhr(), withInterceptorsFromDi()),
   ],
