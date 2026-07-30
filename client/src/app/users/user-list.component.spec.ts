@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { Observable } from 'rxjs';
+import { Observable, throwError } from 'rxjs';
 import { MockUserService } from 'src/testing/user.service.mock';
 import { User } from './user';
 import { UserCardComponent } from './user-card.component';
@@ -19,8 +19,8 @@ describe('User list', () => {
   let fixture: ComponentFixture<UserListComponent>;
   let userService: UserService;
 
-  beforeEach(() => {
-    TestBed.configureTestingModule({
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
       imports: [UserListComponent, UserCardComponent],
       providers: [
         provideHttpClient(withXhr()),
@@ -28,20 +28,15 @@ describe('User list', () => {
         { provide: UserService, useClass: MockUserService },
         provideRouter([]),
       ],
-    });
+    }).compileComponents();
   });
 
   beforeEach(async () => {
-    TestBed.compileComponents().then(() => {
-      fixture = TestBed.createComponent(UserListComponent);
-      userList = fixture.componentInstance;
-      userService = TestBed.inject(UserService);
-      fixture.detectChanges();
-    });
-  });
-
-  it('should create the component', () => {
-    expect(userList).toBeTruthy();
+    await TestBed.compileComponents();
+    fixture = TestBed.createComponent(UserListComponent);
+    userList = fixture.componentInstance;
+    userService = TestBed.inject(UserService);
+    await fixture.whenStable();
   });
 
   it('should initialize with serverFilteredUsers available', () => {
@@ -50,14 +45,14 @@ describe('User list', () => {
     expect(Array.isArray(users)).toBe(true);
   });
 
-  it('should call getUsers() when userRole signal changes', () => {
+  it('should call getUsers() when userForm role signal changes', () => {
     const spy = vi.spyOn(userService, 'getUsers');
     userList.userModel.update((m) => ({ ...m, role: 'admin' }));
     fixture.detectChanges();
     expect(spy).toHaveBeenCalledWith({ role: 'admin', age: undefined });
   });
 
-  it('should call getUsers() when userAge signal changes', () => {
+  it('should call getUsers() when userForm age signal changes', () => {
     const spy = vi.spyOn(userService, 'getUsers');
     userList.userModel.update((m) => ({ ...m, age: 25 }));
     fixture.detectChanges();
@@ -79,23 +74,15 @@ describe('Misbehaving User List', () => {
   let userList: UserListComponent;
   let fixture: ComponentFixture<UserListComponent>;
 
-  let userServiceStub: {
-    getUsers: () => Observable<User[]>;
-    filterUsers: () => User[];
+  // stub UserService for test purposes
+  let userServiceStub = {
+    getUsers: () =>
+      throwError(
+        () =>
+          new HttpErrorResponse({ status: 500, statusText: 'Server Error' }),
+      ),
+    filterUsers: () => [],
   };
-
-  beforeEach(() => {
-    // stub UserService for test purposes
-    userServiceStub = {
-      getUsers: () =>
-        new Observable((observer) => {
-          observer.error(
-            new HttpErrorResponse({ status: 500, statusText: 'Server Error' }),
-          );
-        }),
-      filterUsers: () => [],
-    };
-  });
 
   // Construct the `userList` used for the testing in the `it` statement
   // below.
@@ -114,10 +101,10 @@ describe('Misbehaving User List', () => {
     }).compileComponents();
   });
 
-  beforeEach(() => {
+  beforeEach(async () => {
     fixture = TestBed.createComponent(UserListComponent);
     userList = fixture.componentInstance;
-    fixture.detectChanges();
+    await fixture.whenStable();
   });
 
   it("generates an error if we don't set up a UserListService", () => {
