@@ -1,24 +1,12 @@
-import { Component, ChangeDetectionStrategy, input } from '@angular/core';
+import { Component, input } from '@angular/core';
 import { Company } from '../company-list/company';
-import {
-  MatCard,
-  MatCardContent,
-  MatCardHeader,
-  MatCardSubtitle,
-  MatCardTitle,
-} from '@angular/material/card';
+import { MatCardModule } from '@angular/material/card';
 
 @Component({
   selector: 'app-company-card',
-  imports: [
-    MatCard,
-    MatCardHeader,
-    MatCardTitle,
-    MatCardSubtitle,
-    MatCardContent,
-  ],
+  imports: [MatCardModule],
   templateUrl: './company-card.component.html',
-  styleUrl: './company-card.component.scss',
+  styles: ``,
 })
 export class CompanyCardComponent {
   company = input.required<Company>();

@@ -1,10 +1,5 @@
-import {
-  Component,
-  Signal,
-  inject,
-  ChangeDetectionStrategy,
-} from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { Component, inject, ResourceRef } from '@angular/core';
+import { rxResource } from '@angular/core/rxjs-interop';
 import { CompanyCardComponent } from '../company-card/company-card.component';
 import { UserService } from '../users/user.service';
 import { Company } from './company';
@@ -13,12 +8,13 @@ import { Company } from './company';
   selector: 'app-company-list',
   imports: [CompanyCardComponent],
   templateUrl: './company-list.component.html',
-  styleUrl: './company-list.component.scss',
+  styles: ``,
 })
 export class CompanyListComponent {
   private userService = inject(UserService);
 
-  companies: Signal<Company[]> = toSignal(this.userService.getCompanies(), {
-    initialValue: [],
+  companies: ResourceRef<Company[]> = rxResource({
+    stream: () => this.userService.getCompanies(),
+    defaultValue: [],
   });
 }
