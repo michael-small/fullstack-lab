@@ -12,16 +12,14 @@
 
           <mat-form-field class="input-field">
             <mat-label>Name</mat-label>
-            <!-- As opposed to the RXJS version `[ngModel]="userName$ | async" (ngModelChange)="userName$.next($event)" -->
-            <!-- Signals are their own getter and setter if left uninvoked like that -->
-            <!-- The [()] syntax is saying 'Do both the getting and setting with the respective get/set of the signal' -->
-            <input matInput data-test="userNameInput" placeholder="Filter by name" [(ngModel)]="userName">
+            <!-- TODO - explain form binding -->
+            <input matInput data-test="userNameInput" placeholder="Filter by name" [formField]="userForm.name">
             <mat-hint>Filtered on client</mat-hint>
           </mat-form-field>
 
           <mat-form-field class="input-field">
             <mat-label>Company</mat-label>
-            <input matInput data-test="userCompanyInput" placeholder="Filter by company" [(ngModel)]="userCompany">
+            <input matInput data-test="userCompanyInput" placeholder="Filter by company" [formField]="userForm.company">
             <mat-hint>Filtered on client</mat-hint>
           </mat-form-field>
         </div>
@@ -31,15 +29,15 @@
 
           <mat-form-field class="input-field">
             <mat-label>Age</mat-label>
-            <input matInput data-test="userAgeInput" type="number" placeholder="Filter by age" min="0" max="200"
-              [(ngModel)]="userAge">
+            <input matInput data-test="userAgeInput" type="number" placeholder="Filter by age"
+              [formField]="userForm.age">
             <mat-hint>Filtered on server</mat-hint>
           </mat-form-field>
 
           <mat-form-field class="input-field">
             <mat-label>Role</mat-label>
-            <mat-select [(ngModel)]="userRole" data-test="userRoleSelect">
-              <mat-option>--</mat-option>
+            <mat-select [formField]="userForm.role" data-test="userRoleSelect">
+              <mat-option value="">---</mat-option>
               <mat-option value="admin">Admin</mat-option>
               <mat-option value="editor">Editor</mat-option>
               <mat-option value="viewer">Viewer</mat-option>
@@ -51,7 +49,7 @@
         <br>
         <div class="flex-row gap-8 flex-wrap">
           <label for="viewType">View type: </label>
-          <mat-radio-group aria-label="View type" [(ngModel)]="viewType" data-test="viewTypeRadio">
+          <mat-radio-group aria-label="View type" [formField]="userForm.viewType" data-test="viewTypeRadio">
             <mat-radio-button value="card">Card</mat-radio-button>
             <mat-radio-button value="list">List</mat-radio-button>
           </mat-radio-group>
@@ -63,11 +61,11 @@
 </div>
 
 <div class="flex-row">
-  @if (serverFilteredUsers()) {
+  @if (serverFilteredUsers.hasValue()) {
   <div class="flex-1">
     <!-- Switch between card and list view based on the viewType variable, set above in the mar-radio-group -->
     <div>
-      @switch (viewType()) {
+      @switch (userForm().value().viewType) {
       <!-- Card grid view -->
       @case ('card') {
       <div class="user-cards-container flex-row gap-8 flex-wrap">

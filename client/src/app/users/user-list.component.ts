@@ -4,6 +4,8 @@ import {
   signal,
   inject,
   ChangeDetectionStrategy,
+  effect,
+  ResourceRef,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -22,7 +24,9 @@ import { catchError, combineLatest, of, switchMap, tap } from 'rxjs';
 import { User, UserRole } from './user';
 import { UserCardComponent } from './user-card.component';
 import { UserService } from './user.service';
-import { toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { rxResource, toObservable, toSignal } from '@angular/core/rxjs-interop';
+import { form, FormField, FormRoot, max, min } from '@angular/forms/signals';
+import { HttpErrorResponse } from '@angular/common/http';
 
 /**
  * A component that displays a list of users, either as a grid
@@ -38,13 +42,10 @@ import { toObservable, toSignal } from '@angular/core/rxjs-interop';
   selector: 'app-user-list-component',
   templateUrl: 'user-list.component.html',
   styleUrls: ['./user-list.component.scss'],
-  providers: [],
-  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [
     MatCardModule,
     MatFormFieldModule,
     MatInputModule,
-    FormsModule,
     MatSelectModule,
     MatOptionModule,
     MatRadioModule,
@@ -54,88 +55,80 @@ import { toObservable, toSignal } from '@angular/core/rxjs-interop';
     MatButtonModule,
     MatTooltipModule,
     MatIconModule,
+    FormField,
   ],
 })
 export class UserListComponent {
-  // userService the `UserService` used to get users from the server
+  // Gets users from the server
   private userService = inject(UserService);
-  // snackBar the `MatSnackBar` used to display feedback
+  // Displays feedback
   private snackBar = inject(MatSnackBar);
 
-  userName = signal<string | undefined>(undefined);
-  userAge = signal<number | undefined>(undefined);
-  userRole = signal<UserRole | undefined>(undefined);
-  userCompany = signal<string | undefined>(undefined);
+  userModel = signal<{
+    name: string; // signal forms for strings typically will typically default to empty strings
+    age: number | null; // signal forms are fine with `null` for defaults for numbers
+    role: UserRole | ''; // still should use an empty string as fallback for a string
+    company: string;
+    viewType: 'card' | 'list'; // exact option expected
+  }>({
+    name: '',
+    age: null,
+    role: '',
+    company: '',
+    viewType: 'card',
+  });
 
-  viewType = signal<'card' | 'list'>('card');
+  userForm = form(this.userModel, (p) => {
+    // `min`/`max` and other form field validators should be set here and not in the HTML
+    // If you copy something from the docs or online, Angular will yell at you to just do this
+    min(p.age, 0);
+    max(p.age, 200);
+  });
 
-  errMsg = signal<string | undefined>(undefined);
+  serverFilteredUsers: ResourceRef<User[]> = rxResource({
+    params: this.userForm().value,
+    stream: ({ params }) => {
+      return this.userService.getUsers({
+        role: params.role === '' ? undefined : params.role,
+        age: params.age !== null ? params.age : undefined,
+      });
+    },
+    defaultValue: [],
+  });
 
-  // The `Observable`s used in the definition of `serverFilteredUsers` below need
-  // observables to react to, i.e., they need to know what kinds of changes to respond to.
-  // We want to do the age and role filtering on the server side, so if either of those
-  // text fields change we want to re-run the filtering. That means we have to convert both
-  // of those _signals_ to _observables_ using `toObservable()`. Those are then used in the
-  // definition of `serverFilteredUsers` below to trigger updates to the `Observable` there.
-  private userRole$ = toObservable(this.userRole);
-  private userAge$ = toObservable(this.userAge);
+  filteredUsers = computed<User[]>(() => {
+    const serverFilteredUsers = this.serverFilteredUsers.value();
+    const userFormValue = this.userForm().value();
 
-  // We ultimately `toSignal` this to be able to access it synchronously, but we do all the RXJS operations
-  // "inside" the `toSignal()` call processing and transforming the observables there.
-  serverFilteredUsers =
-    // This `combineLatest` call takes the most recent values from these two observables (both built from
-    // signals as described above) and passes them into the following `.pipe()` call. If either of the
-    // `userRole` or `userAge` signals change (because their text fields get updated), then that will trigger
-    // the corresponding `userRole$` and/or `userAge$` observables to change, which will cause `combineLatest()`
-    // to send a new pair down the pipe.
-    toSignal(
-      combineLatest([this.userRole$, this.userAge$]).pipe(
-        // `switchMap` maps from one observable to another. In this case, we're taking `role` and `age` and passing
-        // them as arguments to `userService.getUsers()`, which then returns a new observable that contains the
-        // results.
-        switchMap(([role, age]) =>
-          this.userService.getUsers({
-            role,
-            age,
-          }),
-        ),
-        // `catchError` is used to handle errors that might occur in the pipeline. In this case `userService.getUsers()`
-        // can return errors if, for example, the server is down or returns an error. This catches those errors, and
-        // sets the `errMsg` signal, which allows error messages to be displayed.
-        catchError((err) => {
-          if (!(err.error instanceof ErrorEvent)) {
-            this.errMsg.set(
-              `Problem contacting the server – Error Code: ${err.status}\nMessage: ${err.message}`,
-            );
-          }
-          this.snackBar.open(this.errMsg() ?? '', 'OK', { duration: 6000 });
-          // `catchError` needs to return the same type. `of` makes an observable of the same type, and makes the array still empty
-          return of<User[]>([]);
-        }),
-        // Tap allows you to perform side effects if necessary
-        tap(() => {
-          // A common side effect is printing to the console.
-          // You don't want to leave code like this in the
-          // production system, but it can be useful in debugging.
-          // console.log('Users were filtered on the server')
-        }),
-      ),
-      { initialValue: [] },
-    );
-
-  // No need for fancy RXJS stuff. We do the fancy RXJS stuff where we call `toSignal`, i.e., up in
-  // the definition of `serverFilteredUsers` above.
-  // `computed()` takes the value of one or more signals (`serverFilteredUsers` in this case) and
-  // _computes_ the value of a new signal (`filteredUsers`). Angular recognizes when any signals
-  // in the function passed to `computed()` change, and will then call that function to generate
-  // the new value of the computed signal.
-  // In this case, whenever `serverFilteredUsers` changes (e.g., because we change `userName`), then `filteredUsers`
-  // will be updated by rerunning the function we're passing to `computed()`.
-  filteredUsers = computed(() => {
-    const serverFilteredUsers = this.serverFilteredUsers();
     return this.userService.filterUsers(serverFilteredUsers, {
-      name: this.userName(),
-      company: this.userCompany(),
+      name: userFormValue.name,
+      company: userFormValue.company,
     });
   });
+
+  errMsg = computed<string>(() => {
+    const error = this.serverFilteredUsers.error();
+    if (error instanceof HttpErrorResponse) {
+      console.log(error);
+      return `Problem contacting the server – Error Code: ${error.status}\nMessage: ${error.message}`;
+    }
+    return '';
+  });
+
+  constructor() {
+    // Docs: "TIP: There are no situations where effect is good, only situations where it is appropriate."
+    // https://angular.dev/guide/signals/effect
+    // INNAPROPRIATE: if this effect were to be used to update a signal
+    // APPROPRIATE: opening the snackbar if there is an error
+    effect(
+      () => {
+        const error = this.errMsg();
+        if (error !== '') {
+          this.snackBar.open(error, 'OK', { duration: 6000 });
+        }
+      },
+      // Optional, but gives you more info in the Angular Devtools signal graph inspector
+      { debugName: 'serverFilteredUsers error snackbar' },
+    );
+  }
 }

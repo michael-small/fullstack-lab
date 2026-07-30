@@ -7,7 +7,11 @@ import { User } from './user';
 import { UserCardComponent } from './user-card.component';
 import { UserListComponent } from './user-list.component';
 import { UserService } from './user.service';
-import { provideHttpClient, withXhr } from '@angular/common/http';
+import {
+  HttpErrorResponse,
+  provideHttpClient,
+  withXhr,
+} from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('User list', () => {
@@ -41,27 +45,27 @@ describe('User list', () => {
   });
 
   it('should initialize with serverFilteredUsers available', () => {
-    const users = userList.serverFilteredUsers();
+    const users = userList.serverFilteredUsers.value();
     expect(users).toBeDefined();
     expect(Array.isArray(users)).toBe(true);
   });
 
   it('should call getUsers() when userRole signal changes', () => {
     const spy = vi.spyOn(userService, 'getUsers');
-    userList.userRole.set('admin');
+    userList.userModel.update((m) => ({ ...m, role: 'admin' }));
     fixture.detectChanges();
     expect(spy).toHaveBeenCalledWith({ role: 'admin', age: undefined });
   });
 
   it('should call getUsers() when userAge signal changes', () => {
     const spy = vi.spyOn(userService, 'getUsers');
-    userList.userAge.set(25);
+    userList.userModel.update((m) => ({ ...m, age: 25 }));
     fixture.detectChanges();
     expect(spy).toHaveBeenCalledWith({ role: undefined, age: 25 });
   });
 
   it('should not show error message on successful load', () => {
-    expect(userList.errMsg()).toBeUndefined();
+    expect(userList.errMsg()).toBe('');
   });
 });
 
@@ -85,7 +89,9 @@ describe('Misbehaving User List', () => {
     userServiceStub = {
       getUsers: () =>
         new Observable((observer) => {
-          observer.error('getUsers() Observer generates an error');
+          observer.error(
+            new HttpErrorResponse({ status: 500, statusText: 'Server Error' }),
+          );
         }),
       filterUsers: () => [],
     };
@@ -118,7 +124,9 @@ describe('Misbehaving User List', () => {
     // If the service fails, we expect the `serverFilteredUsers` signal to
     // be an empty array of users.
     expect(
-      userList.serverFilteredUsers(),
+      userList.serverFilteredUsers.hasValue()
+        ? userList.serverFilteredUsers.value()
+        : [],
       "service can't give values to the list if it's not there",
     ).toEqual([]);
     // We also expect the `errMsg` signal to contain the "Problem contacting…"
