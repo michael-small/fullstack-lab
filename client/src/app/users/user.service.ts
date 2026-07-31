@@ -22,8 +22,8 @@ export class UserService {
   private httpClient = inject(HttpClient);
 
   // The URL for the users part of the server API.
-  readonly userUrl: string = `${environment.apiUrl}users`;
-  readonly usersByCompanyUrl: string = `${environment.apiUrl}usersByCompany`;
+  readonly userUrl = `${environment.apiUrl}users` as const;
+  readonly usersByCompanyUrl = `${environment.apiUrl}usersByCompany` as const;
 
   private readonly roleKey = 'role';
   private readonly ageKey = 'age';
