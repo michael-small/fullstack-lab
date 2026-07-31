@@ -161,11 +161,6 @@ export class AddUserComponent {
         this.router.navigate(['/users/', result]);
         return;
       }
-
-      return {
-        kind: 'serverError',
-        message: 'Failed to add user',
-      };
     } catch (err) {
       if (err instanceof HttpErrorResponse) {
         if (err.status === 400) {
