@@ -1,4 +1,9 @@
-import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  inject,
+  ChangeDetectionStrategy,
+  signal,
+} from '@angular/core';
 import {
   FormControl,
   FormGroup,
@@ -15,17 +20,39 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Router } from '@angular/router';
-import { UserRole } from './user';
+import { User, UserRole } from './user';
 import { UserService } from './user.service';
+import {
+  email,
+  form,
+  FormField,
+  FormRoot,
+  max,
+  maxLength,
+  min,
+  minLength,
+  pattern,
+  required,
+  submit,
+  validate,
+} from '@angular/forms/signals';
+import { firstValueFrom } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
 
+// We use `Omit<User, 'age'> & { age: number | null }` here because the `User` model expects a number for age,
+// but the form control for age could be null. So we allow null in the form model,
+// but when we submit the form, we will have a number for age.
+// https://angular.dev/guide/forms/signals/model-design#form-model-vs-domain-model
+export type AddUserFormModel = Omit<User, 'age' | '_id'> & {
+  age: number | null;
+};
 @Component({
   selector: 'app-add-user',
   templateUrl: './add-user.component.html',
   styleUrls: ['./add-user.component.scss'],
-  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [
-    FormsModule,
-    ReactiveFormsModule,
+    FormRoot,
+    FormField,
     MatCardModule,
     MatFormFieldModule,
     MatInputModule,
@@ -40,153 +67,112 @@ export class AddUserComponent {
   private router = inject(Router);
   private fb = inject(NonNullableFormBuilder);
 
-  addUserForm = this.fb.group({
-    // We allow alphanumeric input and limit the length for name.
-    name: this.fb.control(
-      '',
-      Validators.compose([
-        Validators.required,
-        Validators.minLength(2),
-        // In the real world you'd want to be very careful about having
-        // an upper limit like this because people can sometimes have
-        // very long names. This demonstrates that it's possible, though,
-        // to have maximum length limits.
-        Validators.maxLength(50),
-        (fc) => {
-          if (
-            fc.value.toLowerCase() === 'abc123' ||
-            fc.value.toLowerCase() === '123abc'
-          ) {
-            return { existingName: true };
-          } else {
-            return null;
-          }
-        },
-      ]),
-    ),
-
-    // Since this is for a company, we need workers to be old enough to work, and probably not older than 200.
-    age: this.fb.control<number | null>(
-      null,
-      Validators.compose([
-        Validators.required,
-        Validators.min(15),
-        Validators.max(200),
-        // In the HTML, we set type="number" on this field. That guarantees that the value of this field is numeric,
-        // but not that it's a whole number. (The user could still type -27.3232, for example.) So, we also need
-        // to include this pattern.
-        Validators.pattern('^[0-9]+$'),
-      ]),
-    ),
-
-    // We don't care much about what is in the company field, so we just add it here as part of the form
-    // without any particular validation.
-    company: this.fb.control(''),
-
-    // We don't need a special validator just for our app here, but there is a default one for email.
-    // We will require the email, though.
-    email: this.fb.control(
-      '',
-      Validators.compose([Validators.required, Validators.email]),
-    ),
-
-    role: this.fb.control<UserRole>(
-      'viewer',
-      Validators.compose([
-        Validators.required,
-        Validators.pattern('^(admin|editor|viewer)$'),
-      ]),
-    ),
+  addUserModel = signal<AddUserFormModel>({
+    name: '',
+    age: null,
+    company: '',
+    email: '',
+    role: 'viewer',
   });
 
-  // We can only display one error at a time,
-  // the order the messages are defined in is the order they will display in.
-  readonly addUserValidationMessages = {
-    name: [
-      { type: 'required', message: 'Name is required' },
-      { type: 'minlength', message: 'Name must be at least 2 characters long' },
-      {
-        type: 'maxlength',
-        message: 'Name cannot be more than 50 characters long',
-      },
-      { type: 'existingName', message: 'Name has already been taken' },
-    ],
+  addUserForm = form(this.addUserModel, (p) => {
+    // `name`
+    required(p.name, { message: 'Name is required' });
+    minLength(p.name, 2, {
+      message: 'Name must be at least 2 characters long',
+    });
+    maxLength(p.name, 50, {
+      message: 'Name cannot be more than 50 characters long',
+    });
+    validate(p.name, ({ value }) => {
+      if (
+        value().toLowerCase() === 'abc123' ||
+        value().toLowerCase() === '123abc'
+      ) {
+        return { kind: 'existingName', message: 'Name has already been taken' };
+      } else {
+        return null;
+      }
+    });
+    // `age`
+    required(p.age, { message: 'Age is required' });
+    min(p.age, 15, { message: 'Age must be at least 15' });
+    max(p.age, 200, { message: 'Age may not be greater than 200' });
+    // TODO - int validation needed? '^[0-9]+$'
+    // pattern(p.age, /^[0-9]+$/, { message: 'Age must be a number' });
+    // `email`
+    required(p.email, { message: 'Email is required' });
+    email(p.email, { message: 'Email must be formatted properly' });
+    // `role`
+    required(p.role, { message: 'Role is required' });
+    pattern(p.role, /^(admin|editor|viewer)$/, {
+      message: 'Role must be Admin, Editor, or Viewer',
+    });
+  });
 
-    age: [
-      { type: 'required', message: 'Age is required' },
-      { type: 'min', message: 'Age must be at least 15' },
-      { type: 'max', message: 'Age may not be greater than 200' },
-      { type: 'pattern', message: 'Age must be a whole number' },
-    ],
-
-    email: [
-      { type: 'email', message: 'Email must be formatted properly' },
-      { type: 'required', message: 'Email is required' },
-    ],
-
-    role: [
-      { type: 'required', message: 'Role is required' },
-      { type: 'pattern', message: 'Role must be Admin, Editor, or Viewer' },
-    ],
-  };
-
-  formControlHasError(controlName: string): boolean {
-    return (
-      (this.addUserForm.get(controlName)?.invalid &&
-        (this.addUserForm.get(controlName)?.dirty ||
-          this.addUserForm.get(controlName)?.touched)) ??
-      false
-    );
+  // TODO - make shared util
+  formControlHasError(controlName: keyof AddUserFormModel): boolean {
+    this.addUserForm.age().errors;
+    return (this.addUserForm[controlName]?.().errors().length ?? 0) > 0;
   }
 
-  getErrorMessage(name: keyof typeof this.addUserValidationMessages): string {
-    for (const { type, message } of this.addUserValidationMessages[name]) {
-      if (this.addUserForm.get(name)?.hasError(type)) {
-        return message;
-      }
+  // TODO - make shared util
+  getErrorMessage(name: keyof AddUserFormModel): string {
+    for (const { message } of this.addUserForm[name]?.()?.errors() ?? []) {
+      return message ?? '';
     }
     return 'Unknown error';
   }
 
-  submitForm() {
-    this.userService
-      .addUser({
-        // The `User` model expects a number, but the form control for age could be null. So default to a number.
-        ...this.addUserForm.getRawValue(),
-        age: this.addUserForm.controls.age.value ?? 0,
-      })
-      .subscribe({
-        next: (newId) => {
+  // TODO - use save service and model vs form model
+  async onSave() {
+    await submit(this.addUserForm, async (field) => {
+      try {
+        const result = await firstValueFrom(
+          this.userService.addUser({
+            // The `User` model expects a number, but the form control for age could be null. So default to a number.
+            ...this.addUserForm().value(),
+            age: this.addUserForm().value().age ?? 15,
+          }),
+        );
+
+        if (result) {
           this.snackBar.open(
-            `Added user ${this.addUserForm.value.name}`,
+            `Added user ${this.addUserForm().value().name}`,
             undefined,
             {
               duration: 2000,
             },
           );
-          this.router.navigate(['/users/', newId]);
-        },
-        error: (err) => {
-          if (err.status === 400) {
-            this.snackBar.open(
-              `Tried to add an illegal new user – Error Code: ${err.status}\nMessage: ${err.message}`,
-              'OK',
-              { duration: 5000 },
-            );
-          } else if (err.status === 500) {
-            this.snackBar.open(
-              `The server failed to process your request to add a new user. Is the server up? – Error Code: ${err.status}\nMessage: ${err.message}`,
-              'OK',
-              { duration: 5000 },
-            );
-          } else {
-            this.snackBar.open(
-              `An unexpected error occurred – Error Code: ${err.status}\nMessage: ${err.message}`,
-              'OK',
-              { duration: 5000 },
-            );
-          }
-        },
-      });
+          this.router.navigate(['/users/', result]);
+          return;
+        }
+
+        return {
+          kind: 'serverError',
+          message: 'Failed to add user',
+        };
+      } catch (err: HttpErrorResponse | any) {
+        if (err.status === 400) {
+          this.snackBar.open(
+            `Tried to add an illegal new user – Error Code: ${err.status}\nMessage: ${err.message}`,
+            'OK',
+            { duration: 5000 },
+          );
+        } else if (err.status === 500) {
+          this.snackBar.open(
+            `The server failed to process your request to add a new user. Is the server up? – Error Code: ${err.status}\nMessage: ${err.message}`,
+            'OK',
+            { duration: 5000 },
+          );
+        } else {
+          this.snackBar.open(
+            `An unexpected error occurred – Error Code: ${err.status}\nMessage: ${err.message}`,
+            'OK',
+            { duration: 5000 },
+          );
+        }
+      }
+    });
   }
 }

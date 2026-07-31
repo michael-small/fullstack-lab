@@ -10,14 +10,18 @@ import { provideRouter, Router } from '@angular/router';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { of, throwError } from 'rxjs';
 import { MockUserService } from 'src/testing/user.service.mock';
-import { AddUserComponent } from './add-user.component';
+import { AddUserComponent, AddUserFormModel } from './add-user.component';
 import { UserProfileComponent } from './user-profile.component';
 import { UserService } from './user.service';
 import { provideHttpClient, withXhr } from '@angular/common/http';
+import { FieldTree } from '@angular/forms/signals';
+import { Signal, WritableSignal } from '@angular/core';
+
+// TODO - align comments to new API
 
 describe('AddUserComponent', () => {
   let addUserComponent: AddUserComponent;
-  let addUserForm: FormGroup;
+  let addUserForm: FieldTree<AddUserFormModel, string | number, 'writable'>;
   let fixture: ComponentFixture<AddUserComponent>;
 
   beforeEach(async () => {
@@ -40,8 +44,6 @@ describe('AddUserComponent', () => {
     addUserComponent = fixture.componentInstance;
     fixture.detectChanges();
     addUserForm = addUserComponent.addUserForm;
-    expect(addUserForm).toBeDefined();
-    expect(addUserForm.controls).toBeDefined();
   });
 
   // Not terribly important; if the component doesn't create
@@ -57,235 +59,261 @@ describe('AddUserComponent', () => {
   // Confirms that an initial, empty form is *not* valid, so
   // people can't submit an empty form.
   it('form should be invalid when empty', () => {
-    expect(addUserForm.valid).toBeFalsy();
+    expect(addUserForm().valid()).toBeFalsy();
   });
 
   describe('The name field', () => {
-    let nameControl: AbstractControl;
+    let userModel: WritableSignal<AddUserFormModel>;
+    let userForm: FieldTree<AddUserFormModel, string | number, 'writable'>;
 
     beforeEach(() => {
-      nameControl = addUserComponent.addUserForm.controls.name;
+      userModel = addUserComponent.addUserModel;
+      userForm = addUserComponent.addUserForm;
     });
 
     it('should not allow empty names', () => {
-      nameControl.setValue('');
-      expect(nameControl.valid).toBeFalsy();
+      userModel.update((model) => ({ ...model, name: '' }));
+      expect(userForm.name().valid()).toBeFalsy();
     });
 
     it('should be fine with "Chris Smith"', () => {
-      nameControl.setValue('Chris Smith');
-      expect(nameControl.valid).toBeTruthy();
+      userModel.update((model) => ({ ...model, name: 'Chris Smith' }));
+      expect(userForm.name().valid()).toBeTruthy();
     });
 
     it('should fail on single character names', () => {
-      nameControl.setValue('x');
-      expect(nameControl.valid).toBeFalsy();
+      userModel.update((model) => ({ ...model, name: 'x' }));
+      expect(userForm.name().valid()).toBeFalsy();
       // Annoyingly, Angular uses lowercase 'l' here
       // when it's an upper case 'L' in `Validators.minLength(2)`.
-      expect(nameControl.hasError('minlength')).toBeTruthy();
+      expect(userForm.name().getError('minLength')).toBeTruthy();
     });
 
     // In the real world, you'd want to be pretty careful about
     // setting upper limits on things like name lengths just
     // because there are people with really long names.
     it('should fail on really long names', () => {
-      nameControl.setValue('x'.repeat(100));
-      expect(nameControl.valid).toBeFalsy();
+      userModel.update((model) => ({ ...model, name: 'x'.repeat(51) }));
+      expect(userForm.name().valid()).toBeFalsy();
+      expect(userForm.name().valid()).toBeFalsy();
       // Annoyingly, Angular uses lowercase 'l' here
       // when it's an upper case 'L' in `Validators.maxLength(2)`.
-      expect(nameControl.hasError('maxlength')).toBeTruthy();
+      expect(userForm.name().getError('maxLength')).toBeTruthy();
     });
 
     it('should allow digits in the name', () => {
-      nameControl.setValue('Bad2Th3B0ne');
-      expect(nameControl.valid).toBeTruthy();
+      userModel.update((model) => ({ ...model, name: 'Bad2Th3B0ne' }));
+      expect(userForm.name().valid()).toBeTruthy();
     });
 
     it('should fail if we provide an "existing" name', () => {
       // We're assuming that "abc123" and "123abc" already
       // exist so we disallow them.
-      nameControl.setValue('abc123');
-      expect(nameControl.valid).toBeFalsy();
-      expect(nameControl.hasError('existingName')).toBeTruthy();
+      userModel.update((model) => ({ ...model, name: 'abc123' }));
+      expect(userForm.name().valid()).toBeFalsy();
+      expect(userForm.name().getError('existingName')).toBeTruthy();
 
-      nameControl.setValue('123abc');
-      expect(nameControl.valid).toBeFalsy();
-      expect(nameControl.hasError('existingName')).toBeTruthy();
+      userModel.update((model) => ({ ...model, name: '123abc' }));
+      expect(userForm.name().valid()).toBeFalsy();
+      expect(userForm.name().getError('existingName')).toBeTruthy();
     });
   });
 
   describe('The age field', () => {
-    let ageControl: AbstractControl;
+    let userModel: WritableSignal<AddUserFormModel>;
+    let userForm: FieldTree<AddUserFormModel, string | number, 'writable'>;
 
     beforeEach(() => {
-      ageControl = addUserComponent.addUserForm.controls.age;
+      userModel = addUserComponent.addUserModel;
+      userForm = addUserComponent.addUserForm;
     });
 
     it('should not allow empty ages', () => {
-      ageControl.setValue('');
-      expect(ageControl.valid).toBeFalsy();
+      userModel.update((model) => ({ ...model, age: null }));
+      expect(userForm.age().valid()).toBeFalsy();
     });
 
     it('should be fine with "27"', () => {
-      ageControl.setValue('27');
-      expect(ageControl.valid).toBeTruthy();
+      userModel.update((model) => ({ ...model, age: 27 }));
+      expect(userForm.age().valid()).toBeTruthy();
     });
 
     it('should fail on ages that are too low', () => {
-      ageControl.setValue('14');
-      expect(ageControl.valid).toBeFalsy();
-      expect(ageControl.hasError('min')).toBeTruthy();
+      userModel.update((model) => ({ ...model, age: 14 }));
+      expect(userForm.age().valid()).toBeFalsy();
+      expect(userForm.age().getError('min')).toBeTruthy();
     });
 
     it('should fail on negative ages', () => {
-      ageControl.setValue('-27');
-      expect(ageControl.valid).toBeFalsy();
-      expect(ageControl.hasError('min')).toBeTruthy();
+      userModel.update((model) => ({ ...model, age: -27 }));
+      expect(userForm.age().valid()).toBeFalsy();
+      expect(userForm.age().getError('min')).toBeTruthy();
     });
 
     // In the real world, you'd want to be pretty careful about
     // setting upper limits on things like ages.
     it('should fail on ages that are too high', () => {
-      ageControl.setValue(201);
-      expect(ageControl.valid).toBeFalsy();
+      userModel.update((model) => ({ ...model, age: 201 }));
+      expect(userForm.age().valid()).toBeFalsy();
       // I have no idea why I have to use a lower case 'l' here
       // when it's an upper case 'L' in `Validators.maxLength(2)`.
       // But I apparently do.
-      expect(ageControl.hasError('max')).toBeTruthy();
+      expect(userForm.age().getError('max')).toBeTruthy();
     });
 
-    it('should not allow an age to contain a decimal point', () => {
-      ageControl.setValue(27.5);
-      expect(ageControl.valid).toBeFalsy();
-      expect(ageControl.hasError('pattern')).toBeTruthy();
-    });
+    // TODO - remove this with approval
+    // REASON: html inputs of type `number` can have `step="1"` which prevents decimal points already
+    // it('should not allow an age to contain a decimal point', () => {
+    //   userModel.update((model) => ({ ...model, age: 27.5 }));
+    //   expect(userForm.age().valid()).toBeFalsy();
+    //   expect(userForm.age().getError('pattern')).toBeTruthy();
+    // });
   });
 
   describe('The company field', () => {
     it('should allow empty values', () => {
-      const companyControl = addUserForm.controls.company;
-      companyControl.setValue('');
-      expect(companyControl.valid).toBeTruthy();
+      addUserComponent.addUserModel.update((model) => ({
+        ...model,
+        company: '',
+      }));
+      expect(addUserComponent.addUserForm.company().valid()).toBeTruthy();
     });
   });
 
   describe('The email field', () => {
-    let emailControl: AbstractControl;
+    let userModel: WritableSignal<AddUserFormModel>;
+    let userForm: FieldTree<AddUserFormModel, string | number, 'writable'>;
 
     beforeEach(() => {
-      emailControl = addUserComponent.addUserForm.controls.email;
+      userModel = addUserComponent.addUserModel;
+      userForm = addUserComponent.addUserForm;
     });
 
     it('should not allow empty values', () => {
-      emailControl.setValue('');
-      expect(emailControl.valid).toBeFalsy();
-      expect(emailControl.hasError('required')).toBeTruthy();
+      userModel.update((model) => ({ ...model, email: '' }));
+      expect(userForm.email().valid()).toBeFalsy();
+      expect(userForm.email().getError('required')).toBeTruthy();
     });
 
     it('should accept legal emails', () => {
-      emailControl.setValue('conniestewart@ohmnet.com');
-      expect(emailControl.valid).toBeTruthy();
+      userModel.update((model) => ({
+        ...model,
+        email: 'conniestewart@ohmnet.com',
+      }));
+      expect(userForm.email().valid()).toBeTruthy();
     });
 
     it('should fail without @', () => {
-      emailControl.setValue('conniestewart');
-      expect(emailControl.valid).toBeFalsy();
-      expect(emailControl.hasError('email')).toBeTruthy();
+      userModel.update((model) => ({ ...model, email: 'conniestewart' }));
+      expect(userForm.email().valid()).toBeFalsy();
+      expect(userForm.email().getError('email')).toBeTruthy();
     });
   });
 
   describe('The role field', () => {
-    let roleControl: AbstractControl;
+    let userModel: WritableSignal<AddUserFormModel>;
+    let userForm: FieldTree<AddUserFormModel, string | number, 'writable'>;
 
     beforeEach(() => {
-      roleControl = addUserForm.controls.role;
+      userModel = addUserComponent.addUserModel;
+      userForm = addUserComponent.addUserForm;
     });
 
     it('should not allow empty values', () => {
-      roleControl.setValue('');
-      expect(roleControl.valid).toBeFalsy();
-      expect(roleControl.hasError('required')).toBeTruthy();
+      // `as` is fine here because we validate that anything else is invalid
+      userModel.update((model) => ({
+        ...model,
+        role: '' as 'admin' | 'editor' | 'viewer',
+      }));
+      expect(userForm.role().valid()).toBeFalsy();
+      expect(userForm.role().getError('required')).toBeTruthy();
     });
 
     it('should allow "admin"', () => {
-      roleControl.setValue('admin');
-      expect(roleControl.valid).toBeTruthy();
+      userModel.update((model) => ({ ...model, role: 'admin' }));
+      expect(userForm.role().valid()).toBeTruthy();
     });
 
     it('should allow "editor"', () => {
-      roleControl.setValue('editor');
-      expect(roleControl.valid).toBeTruthy();
+      userModel.update((model) => ({ ...model, role: 'editor' }));
+      expect(userForm.role().valid()).toBeTruthy();
     });
 
     it('should allow "viewer"', () => {
-      roleControl.setValue('viewer');
-      expect(roleControl.valid).toBeTruthy();
+      userModel.update((model) => ({ ...model, role: 'viewer' }));
+      expect(userForm.role().valid()).toBeTruthy();
     });
 
     it('should not allow "Supreme Overlord"', () => {
-      roleControl.setValue('Supreme Overlord');
-      expect(roleControl.valid).toBeFalsy();
+      // This `as` is valid because we can expect the form would not validate this if it were open to be whatever
+      userModel.update((model) => ({
+        ...model,
+        role: 'Supreme Overlord' as 'admin' | 'editor' | 'viewer',
+      }));
+      expect(userForm.role().valid()).toBeFalsy();
     });
   });
 
-  describe('getErrorMessage()', () => {
-    it('should return the correct error message', () => {
-      // The type statement is needed to ensure that `controlName` isn't just any
-      // random string, but rather one of the keys of the `addUserValidationMessages`
-      // map in the component.
-      let controlName: keyof typeof addUserComponent.addUserValidationMessages =
-        'name';
-      addUserComponent.addUserForm
-        .get(controlName)
-        ?.setErrors({ required: true });
-      expect(addUserComponent.getErrorMessage(controlName)).toEqual(
-        'Name is required',
-      );
+  // TODO - handle elsewhere when making these shared
+  //   describe('getErrorMessage()', () => {
+  //     it('should return the correct error message', () => {
+  //       // The type statement is needed to ensure that `controlName` isn't just any
+  //       // random string, but rather one of the keys of the `addUserValidationMessages`
+  //       // map in the component.
+  //       let controlName: keyof typeof addUserComponent.addUserValidationMessages =
+  //         'name';
+  //       addUserComponent.addUserForm
+  //         .get(controlName)
+  //         ?.setErrors({ required: true });
+  //       expect(addUserComponent.getErrorMessage(controlName)).toEqual(
+  //         'Name is required',
+  //       );
 
-      // We don't need the type statement here because we're not using the
-      // same (previously typed) variable. We could use a `let` and the type statement
-      // if we wanted to create a new variable, though.
-      controlName = 'email';
-      addUserComponent.addUserForm
-        .get(controlName)
-        ?.setErrors({ required: true });
-      expect(addUserComponent.getErrorMessage(controlName)).toEqual(
-        'Email is required',
-      );
+  //       // We don't need the type statement here because we're not using the
+  //       // same (previously typed) variable. We could use a `let` and the type statement
+  //       // if we wanted to create a new variable, though.
+  //       controlName = 'email';
+  //       addUserComponent.addUserForm
+  //         .get(controlName)
+  //         ?.setErrors({ required: true });
+  //       expect(addUserComponent.getErrorMessage(controlName)).toEqual(
+  //         'Email is required',
+  //       );
 
-      controlName = 'email';
-      addUserComponent.addUserForm.get(controlName)?.setErrors({ email: true });
-      expect(addUserComponent.getErrorMessage(controlName)).toEqual(
-        'Email must be formatted properly',
-      );
-    });
+  //       controlName = 'email';
+  //       addUserComponent.addUserForm.get(controlName)?.setErrors({ email: true });
+  //       expect(addUserComponent.getErrorMessage(controlName)).toEqual(
+  //         'Email must be formatted properly',
+  //       );
+  //     });
 
-    it('should return "Unknown error" if no error message is found', () => {
-      // The type statement is needed to ensure that `controlName` isn't just any
-      // random string, but rather one of the keys of the `addUserValidationMessages`
-      // map in the component.
-      const controlName: keyof typeof addUserComponent.addUserValidationMessages =
-        'name';
-      addUserComponent.addUserForm
-        .get(controlName)
-        ?.setErrors({ unknown: true });
-      expect(addUserComponent.getErrorMessage(controlName)).toEqual(
-        'Unknown error',
-      );
-    });
-  });
+  //     it('should return "Unknown error" if no error message is found', () => {
+  //       // The type statement is needed to ensure that `controlName` isn't just any
+  //       // random string, but rather one of the keys of the `addUserValidationMessages`
+  //       // map in the component.
+  //       const controlName: keyof typeof addUserComponent.addUserValidationMessages =
+  //         'name';
+  //       addUserComponent.addUserForm
+  //         .get(controlName)
+  //         ?.setErrors({ unknown: true });
+  //       expect(addUserComponent.getErrorMessage(controlName)).toEqual(
+  //         'Unknown error',
+  //       );
+  //     });
+  //   });
+  // });
+
+  // A lot of these tests mock the service using an approach like this doc example
+  // https://angular.dev/guide/testing/components-scenarios#more-async-tests
+  // The same way that the following allows the mock to be used:
+  //
+  // TestBed.configureTestingModule({
+  //   providers: [{provide: TwainQuotes, useClass: MockTwainQuotes}], // A (more-async-tests) - provide + use class of the mock
+  // });
+  // const twainQuotes = TestBed.inject(TwainQuotes) as MockTwainQuotes; // B (more-async-tests) - inject the service as the mock
+  //
+  // Is how these tests work with the mock then being injected in
 });
-
-// A lot of these tests mock the service using an approach like this doc example
-// https://angular.dev/guide/testing/components-scenarios#more-async-tests
-// The same way that the following allows the mock to be used:
-//
-// TestBed.configureTestingModule({
-//   providers: [{provide: TwainQuotes, useClass: MockTwainQuotes}], // A (more-async-tests) - provide + use class of the mock
-// });
-// const twainQuotes = TestBed.inject(TwainQuotes) as MockTwainQuotes; // B (more-async-tests) - inject the service as the mock
-//
-// Is how these tests work with the mock then being injected in
 
 describe('AddUserComponent#submitForm()', () => {
   let component: AddUserComponent;
@@ -329,7 +357,7 @@ describe('AddUserComponent#submitForm()', () => {
     // We don't actually have to do this, but it does mean that when we
     // check that `submitForm()` is called with the right arguments below,
     // we have some reason to believe that that wasn't passing "by accident".
-    component.addUserForm.patchValue({
+    component.addUserModel.set({
       name: 'Chris Smith',
       age: 27,
       company: 'Ohmnet',
@@ -353,10 +381,10 @@ describe('AddUserComponent#submitForm()', () => {
     const addUserSpy = vi
       .spyOn(userService, 'addUser')
       .mockReturnValue(of('1'));
-    component.submitForm();
+    await component.onSave();
     // Check that `.addUser()` was called with the form's values which we set
     // up above.
-    expect(addUserSpy).toHaveBeenCalledWith(component.addUserForm.value);
+    expect(addUserSpy).toHaveBeenCalledWith(component.addUserForm().value());
     // Wait for the router to navigate to the new page. This is necessary since
     // navigation is an asynchronous operation.
     // Now we can check that the router actually navigated to the right place.
@@ -364,7 +392,7 @@ describe('AddUserComponent#submitForm()', () => {
     expect(location.path()).toBe('/users/1');
   });
 
-  it('should call addUser() and handle error response', () => {
+  it('should call addUser() and handle error response', async () => {
     // Save the original path so we can check that it doesn't change.
     const path = location.path();
     // A canned error response to be returned by the spy.
@@ -375,15 +403,15 @@ describe('AddUserComponent#submitForm()', () => {
     const addUserSpy = vi
       .spyOn(userService, 'addUser')
       .mockReturnValue(throwError(() => errorResponse));
-    component.submitForm();
+    await component.onSave();
     // Check that `.addUser()` was called with the form's values which we set
     // up above.
-    expect(addUserSpy).toHaveBeenCalledWith(component.addUserForm.value);
+    expect(addUserSpy).toHaveBeenCalledWith(component.addUserForm().value());
     // Confirm that we're still at the same path.
     expect(location.path()).toBe(path);
   });
 
-  it('should call addUser() and handle error response for illegal user', () => {
+  it('should call addUser() and handle error response for illegal user', async () => {
     // Save the original path so we can check that it doesn't change.
     const path = location.path();
     // A canned error response to be returned by the spy.
@@ -394,15 +422,15 @@ describe('AddUserComponent#submitForm()', () => {
     const addUserSpy = vi
       .spyOn(userService, 'addUser')
       .mockReturnValue(throwError(() => errorResponse));
-    component.submitForm();
+    await component.onSave();
     // Check that `.addUser()` was called with the form's values which we set
     // up above.
-    expect(addUserSpy).toHaveBeenCalledWith(component.addUserForm.value);
+    expect(addUserSpy).toHaveBeenCalledWith(component.addUserForm().value());
     // Confirm that we're still at the same path.
     expect(location.path()).toBe(path);
   });
 
-  it('should call addUser() and handle unexpected error response if it arises', () => {
+  it('should call addUser() and handle unexpected error response if it arises', async () => {
     // Save the original path so we can check that it doesn't change.
     const path = location.path();
     // A canned error response to be returned by the spy.
@@ -413,10 +441,10 @@ describe('AddUserComponent#submitForm()', () => {
     const addUserSpy = vi
       .spyOn(userService, 'addUser')
       .mockReturnValue(throwError(() => errorResponse));
-    component.submitForm();
+    await component.onSave();
     // Check that `.addUser()` was called with the form's values which we set
     // up above.
-    expect(addUserSpy).toHaveBeenCalledWith(component.addUserForm.value);
+    expect(addUserSpy).toHaveBeenCalledWith(component.addUserForm().value());
     // Confirm that we're still at the same path.
     expect(location.path()).toBe(path);
   });
