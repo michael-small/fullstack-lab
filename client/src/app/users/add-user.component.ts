@@ -23,6 +23,7 @@ import { Router } from '@angular/router';
 import { User, UserRole } from './user';
 import { UserService } from './user.service';
 import {
+  apply,
   email,
   form,
   FormField,
@@ -33,6 +34,7 @@ import {
   minLength,
   pattern,
   required,
+  schema,
   submit,
   validate,
 } from '@angular/forms/signals';
@@ -46,6 +48,31 @@ import { HttpErrorResponse } from '@angular/common/http';
 export type AddUserFormModel = Omit<User, 'age' | '_id'> & {
   age: number | null;
 };
+
+/**
+ * @description All validation and logic for a string representing a name
+ * Created because all these rules were too verbose to put inline in the form below
+ */
+const nameSchema = schema<string>((name) => {
+  required(name, { message: 'Name is required' });
+  minLength(name, 2, {
+    message: 'Name must be at least 2 characters long',
+  });
+  maxLength(name, 50, {
+    message: 'Name cannot be more than 50 characters long',
+  });
+  validate(name, ({ value }) => {
+    if (
+      value().toLowerCase() === 'abc123' ||
+      value().toLowerCase() === '123abc'
+    ) {
+      return { kind: 'existingName', message: 'Name has already been taken' };
+    } else {
+      return null;
+    }
+  });
+});
+
 @Component({
   selector: 'app-add-user',
   templateUrl: './add-user.component.html',
@@ -65,7 +92,6 @@ export class AddUserComponent {
   private userService = inject(UserService);
   private snackBar = inject(MatSnackBar);
   private router = inject(Router);
-  private fb = inject(NonNullableFormBuilder);
 
   addUserModel = signal<AddUserFormModel>({
     name: '',
@@ -76,30 +102,17 @@ export class AddUserComponent {
   });
 
   addUserForm = form(this.addUserModel, (p) => {
-    // `name`
-    required(p.name, { message: 'Name is required' });
-    minLength(p.name, 2, {
-      message: 'Name must be at least 2 characters long',
-    });
-    maxLength(p.name, 50, {
-      message: 'Name cannot be more than 50 characters long',
-    });
-    validate(p.name, ({ value }) => {
-      if (
-        value().toLowerCase() === 'abc123' ||
-        value().toLowerCase() === '123abc'
-      ) {
-        return { kind: 'existingName', message: 'Name has already been taken' };
-      } else {
-        return null;
-      }
-    });
+    // Applying form logic
+    // 1: `@angular/forms/signals` package logic
+    // 2: schema functions (compose multiple logic calls into one function)
+
+    // #1: `@angular/forms/signals` package logic
+    // When you don't need re-use or do not consider something too verbose
+    //
     // `age`
     required(p.age, { message: 'Age is required' });
     min(p.age, 15, { message: 'Age must be at least 15' });
     max(p.age, 200, { message: 'Age may not be greater than 200' });
-    // TODO - int validation needed? '^[0-9]+$'
-    // pattern(p.age, /^[0-9]+$/, { message: 'Age must be a number' });
     // `email`
     required(p.email, { message: 'Email is required' });
     email(p.email, { message: 'Email must be formatted properly' });
@@ -108,6 +121,16 @@ export class AddUserComponent {
     pattern(p.role, /^(admin|editor|viewer)$/, {
       message: 'Role must be Admin, Editor, or Viewer',
     });
+
+    // #2: schema function
+    // Reusable set of rules you can pull in from somewhere else.
+    // Composed of the invididual field logic like above's #1
+    // Schema could be literally one function or however many
+    // Benefit of schema outside of this class: easier testing w/o injection context of the class
+    //
+    // `name`
+    // Use the name schema defined above on the `name` field
+    apply(p.name, nameSchema);
   });
 
   // TODO - make shared util
@@ -127,52 +150,56 @@ export class AddUserComponent {
   // TODO - use save service and model vs form model
   async onSave() {
     await submit(this.addUserForm, async (field) => {
-      try {
-        const result = await firstValueFrom(
-          this.userService.addUser({
-            // The `User` model expects a number, but the form control for age could be null. So default to a number.
-            ...this.addUserForm().value(),
-            age: this.addUserForm().value().age ?? 15,
-          }),
-        );
-
-        if (result) {
-          this.snackBar.open(
-            `Added user ${this.addUserForm().value().name}`,
-            undefined,
-            {
-              duration: 2000,
-            },
-          );
-          this.router.navigate(['/users/', result]);
-          return;
-        }
-
-        return {
-          kind: 'serverError',
-          message: 'Failed to add user',
-        };
-      } catch (err: HttpErrorResponse | any) {
-        if (err.status === 400) {
-          this.snackBar.open(
-            `Tried to add an illegal new user – Error Code: ${err.status}\nMessage: ${err.message}`,
-            'OK',
-            { duration: 5000 },
-          );
-        } else if (err.status === 500) {
-          this.snackBar.open(
-            `The server failed to process your request to add a new user. Is the server up? – Error Code: ${err.status}\nMessage: ${err.message}`,
-            'OK',
-            { duration: 5000 },
-          );
-        } else {
-          this.snackBar.open(
-            `An unexpected error occurred – Error Code: ${err.status}\nMessage: ${err.message}`,
-            'OK',
-            { duration: 5000 },
-          );
-        }
-      }
+      await this.save();
     });
+  }
+
+  private async save() {
+    try {
+      const result = await firstValueFrom(
+        this.userService.addUser({
+          // The `User` model expects a number, but the form control for age could be null. So default to a number.
+          ...this.addUserForm().value(),
+          age: this.addUserForm().value().age ?? 15,
+        }),
+      );
+
+      if (result) {
+        this.snackBar.open(
+          `Added user ${this.addUserForm().value().name}`,
+          undefined,
+          {
+            duration: 2000,
+          },
+        );
+        this.router.navigate(['/users/', result]);
+        return;
+      }
+
+      return {
+        kind: 'serverError',
+        message: 'Failed to add user',
+      };
+    } catch (err: HttpErrorResponse | any) {
+      if (err.status === 400) {
+        this.snackBar.open(
+          `Tried to add an illegal new user – Error Code: ${err.status}\nMessage: ${err.message}`,
+          'OK',
+          { duration: 5000 },
+        );
+      } else if (err.status === 500) {
+        this.snackBar.open(
+          `The server failed to process your request to add a new user. Is the server up? – Error Code: ${err.status}\nMessage: ${err.message}`,
+          'OK',
+          { duration: 5000 },
+        );
+      } else {
+        this.snackBar.open(
+          `An unexpected error occurred – Error Code: ${err.status}\nMessage: ${err.message}`,
+          'OK',
+          { duration: 5000 },
+        );
+      }
+    }
   }
 }
