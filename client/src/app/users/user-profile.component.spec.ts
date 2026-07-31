@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { HttpErrorResponse } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { throwError } from 'rxjs';
@@ -51,7 +52,7 @@ describe('UserProfileComponent', async () => {
       `/users/${expectedUser._id}`,
       UserProfileComponent,
     );
-    expect(component.user()).toEqual(expectedUser);
+    expect(component.user.value()).toEqual(expectedUser);
   });
 
   it('should navigate to correct user when the id parameter changes', async () => {
@@ -63,7 +64,7 @@ describe('UserProfileComponent', async () => {
       `/users/${expectedUser._id}`,
       UserProfileComponent,
     );
-    expect(component.user()).toEqual(expectedUser);
+    expect(component.user.value()).toEqual(expectedUser);
 
     // Changing the paramMap should update the displayed user profile.
     expectedUser = MockUserService.testUsers[1];
@@ -71,10 +72,10 @@ describe('UserProfileComponent', async () => {
       `/users/${expectedUser._id}`,
       UserProfileComponent,
     );
-    expect(component.user()).toEqual(expectedUser);
+    expect(component.user.value()).toEqual(expectedUser);
   });
 
-  it('should have `undefined` for the user for a bad ID', async () => {
+  it('should not have a value for a bad ID', async () => {
     const component = await harness.navigateByUrl(
       `/users/badID`,
       UserProfileComponent,
@@ -82,18 +83,15 @@ describe('UserProfileComponent', async () => {
 
     await wait();
     await fixture.whenStable();
-    // If the given ID doesn't map to a user, we expect the service
-    // to return `undefined`, so we would expect the component's user
-    // to also be `undefined`.
-    expect(component.user()).toBeUndefined();
+    // If the given ID doesn't map to a user, we expect the resource to be
+    // in an error state and not have a value that can be accessed safely
+    expect(component.user.hasValue()).toBe(false);
   });
 
   it('should set error data on observable error', async () => {
-    const mockError = {
-      message: 'Test Error',
+    const mockError = new HttpErrorResponse({
       error: { title: 'Error Title' },
-    };
-
+    });
     // "Spy" on the `.getUserById()` method in the user service. Here we basically
     // intercept any calls to that method and return the error response
     // defined above.
