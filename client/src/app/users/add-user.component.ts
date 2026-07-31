@@ -133,20 +133,6 @@ export class AddUserComponent {
     apply(p.name, nameSchema);
   });
 
-  // TODO - make shared util
-  formControlHasError(controlName: keyof AddUserFormModel): boolean {
-    this.addUserForm.age().errors;
-    return (this.addUserForm[controlName]?.().errors().length ?? 0) > 0;
-  }
-
-  // TODO - make shared util
-  getErrorMessage(name: keyof AddUserFormModel): string {
-    for (const { message } of this.addUserForm[name]?.()?.errors() ?? []) {
-      return message ?? '';
-    }
-    return 'Unknown error';
-  }
-
   // TODO - use save service and model vs form model
   async onSave() {
     await submit(this.addUserForm, async (field) => {

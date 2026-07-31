@@ -253,66 +253,6 @@ describe('AddUserComponent', () => {
       expect(userForm.role().valid()).toBeFalsy();
     });
   });
-
-  // TODO - handle elsewhere when making these shared
-  //   describe('getErrorMessage()', () => {
-  //     it('should return the correct error message', () => {
-  //       // The type statement is needed to ensure that `controlName` isn't just any
-  //       // random string, but rather one of the keys of the `addUserValidationMessages`
-  //       // map in the component.
-  //       let controlName: keyof typeof addUserComponent.addUserValidationMessages =
-  //         'name';
-  //       addUserComponent.addUserForm
-  //         .get(controlName)
-  //         ?.setErrors({ required: true });
-  //       expect(addUserComponent.getErrorMessage(controlName)).toEqual(
-  //         'Name is required',
-  //       );
-
-  //       // We don't need the type statement here because we're not using the
-  //       // same (previously typed) variable. We could use a `let` and the type statement
-  //       // if we wanted to create a new variable, though.
-  //       controlName = 'email';
-  //       addUserComponent.addUserForm
-  //         .get(controlName)
-  //         ?.setErrors({ required: true });
-  //       expect(addUserComponent.getErrorMessage(controlName)).toEqual(
-  //         'Email is required',
-  //       );
-
-  //       controlName = 'email';
-  //       addUserComponent.addUserForm.get(controlName)?.setErrors({ email: true });
-  //       expect(addUserComponent.getErrorMessage(controlName)).toEqual(
-  //         'Email must be formatted properly',
-  //       );
-  //     });
-
-  //     it('should return "Unknown error" if no error message is found', () => {
-  //       // The type statement is needed to ensure that `controlName` isn't just any
-  //       // random string, but rather one of the keys of the `addUserValidationMessages`
-  //       // map in the component.
-  //       const controlName: keyof typeof addUserComponent.addUserValidationMessages =
-  //         'name';
-  //       addUserComponent.addUserForm
-  //         .get(controlName)
-  //         ?.setErrors({ unknown: true });
-  //       expect(addUserComponent.getErrorMessage(controlName)).toEqual(
-  //         'Unknown error',
-  //       );
-  //     });
-  //   });
-  // });
-
-  // A lot of these tests mock the service using an approach like this doc example
-  // https://angular.dev/guide/testing/components-scenarios#more-async-tests
-  // The same way that the following allows the mock to be used:
-  //
-  // TestBed.configureTestingModule({
-  //   providers: [{provide: TwainQuotes, useClass: MockTwainQuotes}], // A (more-async-tests) - provide + use class of the mock
-  // });
-  // const twainQuotes = TestBed.inject(TwainQuotes) as MockTwainQuotes; // B (more-async-tests) - inject the service as the mock
-  //
-  // Is how these tests work with the mock then being injected in
 });
 
 describe('AddUserComponent#submitForm()', () => {
