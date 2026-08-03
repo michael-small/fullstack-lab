@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { AddUserFormModel, AddUserFormService } from './add-user.form.service';
 import { FieldTree } from '@angular/forms/signals';
 import { TestBed } from '@angular/core/testing';
+import { UserRole } from './user';
 
 describe('AddUserFormService', () => {
   let userModel: WritableSignal<AddUserFormModel>;
@@ -156,7 +157,7 @@ describe('AddUserFormService', () => {
       // `as` is fine here because we validate that anything else is invalid
       userModel.update((model) => ({
         ...model,
-        role: '' as 'admin' | 'editor' | 'viewer',
+        role: '' as UserRole,
       }));
       expect(userForm.role().valid()).toBeFalsy();
       expect(userForm.role().getError('required')).toBeTruthy();
@@ -181,7 +182,7 @@ describe('AddUserFormService', () => {
       // This `as` is valid because we can expect the form would not validate this if it were open to be whatever
       userModel.update((model) => ({
         ...model,
-        role: 'Supreme Overlord' as 'admin' | 'editor' | 'viewer',
+        role: 'Supreme Overlord' as UserRole,
       }));
       expect(userForm.role().valid()).toBeFalsy();
     });
