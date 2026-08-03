@@ -1,77 +1,17 @@
-import {
-  Component,
-  inject,
-  ChangeDetectionStrategy,
-  signal,
-} from '@angular/core';
-import {
-  FormControl,
-  FormGroup,
-  FormsModule,
-  NonNullableFormBuilder,
-  ReactiveFormsModule,
-  Validators,
-} from '@angular/forms';
+import { Component, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatOptionModule } from '@angular/material/core';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { FormField, FormRoot, submit } from '@angular/forms/signals';
+import { AddUserFormService } from './add-user.form.service';
+import { firstValueFrom } from 'rxjs';
+import { UserService } from './user.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Router } from '@angular/router';
-import { User, UserRole } from './user';
-import { UserService } from './user.service';
-import {
-  apply,
-  email,
-  form,
-  FormField,
-  FormRoot,
-  max,
-  maxLength,
-  min,
-  minLength,
-  pattern,
-  required,
-  schema,
-  submit,
-  validate,
-} from '@angular/forms/signals';
-import { firstValueFrom } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
-
-// We use `Omit<User, 'age'> & { age: number | null }` here because the `User` model expects a number for age,
-// but the form control for age could be null. So we allow null in the form model,
-// but when we submit the form, we will have a number for age.
-// https://angular.dev/guide/forms/signals/model-design#form-model-vs-domain-model
-export type AddUserFormModel = Omit<User, 'age' | '_id'> & {
-  age: number | null;
-};
-
-/**
- * @description All validation and logic for a string representing a name
- * Created because all these rules were too verbose to put inline in the form below
- */
-const nameSchema = schema<string>((name) => {
-  required(name, { message: 'Name is required' });
-  minLength(name, 2, {
-    message: 'Name must be at least 2 characters long',
-  });
-  maxLength(name, 50, {
-    message: 'Name cannot be more than 50 characters long',
-  });
-  validate(name, ({ value }) => {
-    if (
-      value().toLowerCase() === 'abc123' ||
-      value().toLowerCase() === '123abc'
-    ) {
-      return { kind: 'existingName', message: 'Name has already been taken' };
-    } else {
-      return null;
-    }
-  });
-});
 
 @Component({
   selector: 'app-add-user',
@@ -89,53 +29,16 @@ const nameSchema = schema<string>((name) => {
   ],
 })
 export class AddUserComponent {
+  private addUserFormService = inject(AddUserFormService);
+  addUserForm = this.addUserFormService.addUserForm;
+
   private userService = inject(UserService);
   private snackBar = inject(MatSnackBar);
   private router = inject(Router);
 
-  addUserModel = signal<AddUserFormModel>({
-    name: '',
-    age: null,
-    company: '',
-    email: '',
-    role: 'viewer',
-  });
-
-  addUserForm = form(this.addUserModel, (p) => {
-    // Applying form logic
-    // 1: `@angular/forms/signals` package logic
-    // 2: schema functions (compose multiple logic calls into one function)
-
-    // #1: `@angular/forms/signals` package logic
-    // When you don't need re-use or do not consider something too verbose
-    //
-    // `age`
-    required(p.age, { message: 'Age is required' });
-    min(p.age, 15, { message: 'Age must be at least 15' });
-    max(p.age, 200, { message: 'Age may not be greater than 200' });
-    // `email`
-    required(p.email, { message: 'Email is required' });
-    email(p.email, { message: 'Email must be formatted properly' });
-    // `role`
-    required(p.role, { message: 'Role is required' });
-    pattern(p.role, /^(admin|editor|viewer)$/, {
-      message: 'Role must be Admin, Editor, or Viewer',
-    });
-
-    // #2: schema function
-    // Reusable set of rules you can pull in from somewhere else.
-    // Composed of the invididual field logic like above's #1
-    // Schema could be literally one function or however many
-    // Benefit of schema outside of this class: easier testing w/o injection context of the class
-    //
-    // `name`
-    // Use the name schema defined above on the `name` field
-    apply(p.name, nameSchema);
-  });
-
   // TODO - use save service and model vs form model
   async onSave() {
-    await submit(this.addUserForm, async (field) => {
+    await submit(this.addUserFormService.addUserForm, async (field) => {
       await this.save();
     });
   }
@@ -143,11 +46,9 @@ export class AddUserComponent {
   private async save() {
     try {
       const result = await firstValueFrom(
-        this.userService.addUser({
-          // The `User` model expects a number, but the form control for age could be null. So default to a number.
-          ...this.addUserForm().value(),
-          age: this.addUserForm().value().age ?? 15,
-        }),
+        this.userService.addUser(
+          this.addUserFormService.formToDomainModel(this.addUserForm().value()),
+        ),
       );
 
       if (result) {
