@@ -1,96 +1,107 @@
-import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
-import { MatCardModule } from '@angular/material/card';
-import { ActivatedRoute, RouterModule } from '@angular/router';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { HttpErrorResponse } from '@angular/common/http';
+import { provideRouter } from '@angular/router';
+import { RouterTestingHarness } from '@angular/router/testing';
 import { throwError } from 'rxjs';
-import { ActivatedRouteStub } from '../../testing/activated-route-stub';
 import { MockUserService } from '../../testing/user.service.mock';
 import { User } from './user';
-import { UserCardComponent } from './user-card.component';
 import { UserProfileComponent } from './user-profile.component';
 import { UserService } from './user.service';
 
-describe('UserProfileComponent', () => {
-  let component: UserProfileComponent;
+describe('UserProfileComponent', async () => {
   let fixture: ComponentFixture<UserProfileComponent>;
-  const mockUserService = new MockUserService();
+  let userService: UserService;
   const chrisId = 'chris_id';
-  const activatedRoute: ActivatedRouteStub = new ActivatedRouteStub({
-    // Using the constructor here lets us try that branch in `activated-route-stub.ts`
-    // and then we can choose a new parameter map in the tests if we choose
-    id: chrisId,
-  });
+  let harness: RouterTestingHarness;
 
-  beforeEach(waitForAsync(() => {
+  const wait = (ms = 0) => new Promise((resolve) => setTimeout(resolve, ms));
+
+  beforeEach(async () => {
     TestBed.configureTestingModule({
-      imports: [
-        RouterModule,
-        MatCardModule,
-        UserProfileComponent,
-        UserCardComponent,
-      ],
+      imports: [UserProfileComponent],
       providers: [
-        { provide: UserService, useValue: mockUserService },
-        { provide: ActivatedRoute, useValue: activatedRoute },
+        { provide: UserService, useClass: MockUserService },
+        provideRouter([{ path: 'users/:id', component: UserProfileComponent }]),
       ],
     }).compileComponents();
-  }));
-
-  beforeEach(() => {
-    fixture = TestBed.createComponent(UserProfileComponent);
-    component = fixture.componentInstance;
-    fixture.detectChanges();
   });
 
-  it('should create the component', () => {
+  beforeEach(async () => {
+    fixture = TestBed.createComponent(UserProfileComponent);
+    userService = TestBed.inject(UserService);
+
+    harness = await RouterTestingHarness.create();
+  });
+
+  it('should create the component', async () => {
+    const component = await harness.navigateByUrl(
+      `/users/${chrisId}`,
+      UserProfileComponent,
+    );
     expect(component).toBeTruthy();
   });
 
-  it('should navigate to a specific user profile', () => {
+  it('should navigate to a specific user profile', async () => {
     const expectedUser: User = MockUserService.testUsers[0];
     // Setting this should cause anyone subscribing to the paramMap
     // to update. Our `UserProfileComponent` subscribes to that, so
     // it should update right away.
-    activatedRoute.setParamMap({ id: expectedUser._id });
-    expect(component.user()).toEqual(expectedUser);
+    const component = await harness.navigateByUrl(
+      `/users/${expectedUser._id}`,
+      UserProfileComponent,
+    );
+    expect(component.user.value()).toEqual(expectedUser);
   });
 
-  it('should navigate to correct user when the id parameter changes', () => {
+  it('should navigate to correct user when the id parameter changes', async () => {
     let expectedUser: User = MockUserService.testUsers[0];
     // Setting this should cause anyone subscribing to the paramMap
     // to update. Our `UserProfileComponent` subscribes to that, so
     // it should update right away.
-    activatedRoute.setParamMap({ id: expectedUser._id });
-    expect(component.user()).toEqual(expectedUser);
+    const component = await harness.navigateByUrl(
+      `/users/${expectedUser._id}`,
+      UserProfileComponent,
+    );
+    expect(component.user.value()).toEqual(expectedUser);
 
     // Changing the paramMap should update the displayed user profile.
     expectedUser = MockUserService.testUsers[1];
-    activatedRoute.setParamMap({ id: expectedUser._id });
-    expect(component.user()).toEqual(expectedUser);
+    await harness.navigateByUrl(
+      `/users/${expectedUser._id}`,
+      UserProfileComponent,
+    );
+    expect(component.user.value()).toEqual(expectedUser);
   });
 
-  it('should have `null` for the user for a bad ID', () => {
-    activatedRoute.setParamMap({ id: 'badID' });
-
-    // If the given ID doesn't map to a user, we expect the service
-    // to return `null`, so we would expect the component's user
-    // to also be `null`.
-    expect(component.user()).toBeNull();
-  });
-
-  it('should set error data on observable error', () => {
-    const mockError = {
-      message: 'Test Error',
-      error: { title: 'Error Title' },
-    };
-
-    // "Spy" on the `.addUser()` method in the user service. Here we basically
-    // intercept any calls to that method and return the error response
-    // defined above.
-    const getUserSpy = spyOn(mockUserService, 'getUserById').and.returnValue(
-      throwError(() => mockError)
+  it('should not have a value for a bad ID', async () => {
+    const component = await harness.navigateByUrl(
+      `/users/badID`,
+      UserProfileComponent,
     );
 
-    activatedRoute.setParamMap({ id: chrisId });
+    await wait();
+    await fixture.whenStable();
+    // If the given ID doesn't map to a user, we expect the resource to be
+    // in an error state and not have a value that can be accessed safely
+    expect(component.user.hasValue()).toBe(false);
+  });
+
+  it('should set error data on observable error', async () => {
+    const mockError = new HttpErrorResponse({
+      error: { title: 'Error Title' },
+    });
+    // "Spy" on the `.getUserById()` method in the user service. Here we basically
+    // intercept any calls to that method and return the error response
+    // defined above.
+    const getUserSpy = vi
+      .spyOn(userService, 'getUserById')
+      .mockReturnValue(throwError(() => mockError));
+
+    const component = await harness.navigateByUrl(
+      `/users/${chrisId}`,
+      UserProfileComponent,
+    );
 
     expect(component.error()).toEqual({
       help: 'There was a problem loading the user – try again.',

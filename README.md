@@ -24,15 +24,16 @@ to the MongoDB database.
 
 ## Setup
 
-As in the previous labs, you'll be using VS Code and GitKraken. Once you've all joined your
+As in the previous labs, you'll be using VS Code (and GitKraken or the git/source control tools built in to VS Code). Once you've all joined your
 group using GitHub classroom, you can clone your repository using your tools of choice.
 
 As a reminder, **here are the steps needed to _run_ the project**:
 
 1. Go into the `database` directory and enter `./mongoseed.sh` to run the script that will seed the database.
 2. Go into the `server` directory and enter `./gradlew run` to run your server.
-3. In a _different_ terminal, go into the `client` directory and enter `ng serve` to make the client available.
-4. You can then go to [`localhost:4200`](http://localhost:4200) in your favorite web browser and see
+3. (If this is the first time you are running the client on this machine, in a _different_ terminal window from the server that is running, go into the `client` directory and enter `npm install` to install the client dependencies. This only needs to be done once per local clone of the repo. Running `npm install` may take several minutes the first time since it has to download all the dependencies. This step generates a `node_modules` directory in the `client` directory that contains all the installed dependencies.)
+4. In a _different_ terminal window from the server that is running, go into the `client` directory and enter `ng serve` to make the client available.
+5. You can then go to [`localhost:4200`](http://localhost:4200) in your favorite web browser and see
    your nifty Angular app.
 
 ### Make sure you have Mongo running on your (lab) computer
@@ -41,10 +42,8 @@ For all of this to work, it's critical that you have Mongo installed
 and working. We should have that running on all the lab computers
 (although it's good to confirm that). If you also want to do
 development on your own computer you'll need to make sure you
-have MongoDB installed, as described in the system setup
-documentation from the
-beginning of the semester (but, maybe a newer version around 7.0.16). If you're unsure if it's set up and
-working correctly, try running `mongosh`.
+have [MongoDB Community Edition](https://www.mongodb.com/docs/v7.0/tutorial/) and the [Mongo Shell](https://www.mongodb.com/try/download/shell) installed. If you're unsure if it's set up and
+working correctly, try running `mongosh`. Make sure that you also have the MongoDB Command Line Database Tools installed (which used to be included in the MongoDB installation but are now separate) and that all of the appropriate binary files are added to your PATH variable. You can find [the MongoDB Command Line Database Tools here](https://www.mongodb.com/try/download/database-tools). It's possible that this setup will be different depending upon your operating system, so you may need to do some research on how to set up MongoDB and the Mongo Shell on your specific OS. If you have any issues with this, please ask your instructor or TA for help (outside of lab time).
 
 If your MongoDB server isn't installed you'll likely get an error
 message like:
@@ -94,7 +93,7 @@ Like in previous labs, click "Install All" to automatically install them.
 Before you start working you will need to install the dependencies for the client.
 
 1. Move into the `client` directory (`cd client`)
-2. Run `npm install`
+2. Run `npm install`. This only needs to be done once per local clone of the repo. Running `npm install` may take several minutes the first time since it has to download all the dependencies. This step generates a `node_modules` directory in the `client` directory that contains all the installed dependencies. There may be some warnings about vulnerabilities during the install process; these are generally safe to ignore unless they are errors. You may also be able to fix them later by running `npm audit fix` in the `client` directory.
 
 ### Seeding the Database
 
@@ -116,8 +115,6 @@ will _build_ the server (including running Checkstyle and the tests), but not ru
 
 Once you have successfully run `npm install`, in order to serve up the _client side_ of your project, you will run
 `ng serve` (from the `client` directory as well). The client will be available by default at [`localhost:4200`](http://localhost:4200). If your server is running, you will be able to see data for users if you navigate to the right place in the project.
-
-The major difference between this lab and the previous labs is that, here, your data (users and todos) will be stored in a database rather than as "flat" JSON files within the server source code.
 
 For the most part, you will be using a local installation of Mongo as a `dev` (development) database. You don't really need to worry about how this is set up, but you do need to know a couple of tricks to help you use it
 effectively.

@@ -35,7 +35,7 @@ dependencies {
   implementation 'org.mongodb:mongodb-driver-sync:5.6.2'
 
   // MongoJack, MongoDB integration for Jackson
-  implementation 'org.mongojack:mongojack:5.0.3'
+  implementation 'org.mongojack:mongojack:5.1.0'
 
   // Simple Logging Facade for Java
   implementation 'org.slf4j:slf4j-simple:2.0.17'
@@ -77,6 +77,8 @@ jacocoTestReport {
     // location is buried pretty deep in the build directory,
     // so this makes it easier to find.
     html.outputLocation = file("${buildDir}/jacocoHtml")
+    xml.required = true
+    xml.outputLocation = layout.buildDirectory.dir('jacoco/jacoco.xml').get().asFile
   }
 
   afterEvaluate {

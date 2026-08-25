@@ -1,54 +1,45 @@
-import { Component, DestroyRef, signal } from '@angular/core';
+import { Component, inject, computed } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
-import { MatSnackBar } from '@angular/material/snack-bar';
-import { ActivatedRoute, ParamMap } from '@angular/router';
-import { catchError, map, switchMap } from 'rxjs/operators';
-// import { User } from './user';
 import { UserCardComponent } from './user-card.component';
 import { UserService } from './user.service';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { of } from 'rxjs';
-// import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-
+import { rxResource } from '@angular/core/rxjs-interop';
+import { injectParams } from 'ngxtension/inject-params';
+import { HttpErrorResponse } from '@angular/common/http';
+import { MatButtonModule } from '@angular/material/button';
 @Component({
   selector: 'app-user-profile',
   templateUrl: './user-profile.component.html',
   styleUrls: ['./user-profile.component.scss'],
-  imports: [UserCardComponent, MatCardModule],
+  imports: [UserCardComponent, MatCardModule, MatButtonModule],
 })
 export class UserProfileComponent {
-  user = toSignal(
-    this.route.paramMap.pipe(
-      // Map the paramMap into the id
-      map((paramMap: ParamMap) => paramMap.get('id')),
-      // Maps the `id` string into the Observable<User>,
-      // which will emit zero or one values depending on whether there is a
-      // `User` with that ID.
-      switchMap((id: string) => this.userService.getUserById(id)),
-      catchError((_err) => {
-        this.error.set({
-          help: 'There was a problem loading the user – try again.',
-          httpResponse: _err.message,
-          message: _err.error?.title,
-        });
-        return of();
-      })
-      /*
-       * You can uncomment the line that starts with `finalize` below to use that console message
-       * as a way of verifying that this subscription is completing.
-       * We removed it since we were not doing anything interesting on completion
-       * and didn't want to clutter the console log
-       */
-      // finalize(() => console.log('We got a new user, and we are done!'))
-    )
-  );
-  // The `error` will initially have empty strings for all its components.
-  error = signal({ help: '', httpResponse: '', message: '' });
+  private userService = inject(UserService);
 
-  constructor(
-    private snackBar: MatSnackBar,
-    private route: ActivatedRoute,
-    private userService: UserService,
-    private destroyRef: DestroyRef
-  ) {}
+  // The Angular team recommends something like ngxtension for routing signal utils
+  // https://www.reddit.com/r/angular/comments/1uq0xfu/comment/ow6rcfa/
+  private id = injectParams<string>('id', { defaultValue: '' });
+
+  // TODO - explain
+  user = rxResource({
+    params: this.id,
+    stream: ({ params }) => this.userService.getUserById(params),
+    defaultValue: undefined,
+  });
+
+  // The `error` will initially have empty strings for all its components.
+  error = computed<{
+    help: string;
+    httpResponse: string;
+    message: string;
+  }>(() => {
+    const error = this.user.error();
+    if (error instanceof HttpErrorResponse) {
+      return {
+        help: 'There was a problem loading the user – try again.',
+        httpResponse: error.message,
+        message: error.error?.title ?? '',
+      };
+    }
+    return { help: '', httpResponse: '', message: '' };
+  });
 }

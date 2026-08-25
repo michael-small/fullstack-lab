@@ -1,19 +1,19 @@
-import { Injectable } from '@angular/core';
+import { Service } from '@angular/core';
 import { Observable, of } from 'rxjs';
-import { AppComponent } from 'src/app/app.component';
 import { User, UserRole } from '../app/users/user';
-import { UserService } from '../app/users/user.service';
+import { UserService } from 'src/app/users/user.service';
 
 /**
  * A "mock" version of the `UserService` that can be used to test components
  * without having to create an actual service. It needs to be `Injectable` since
  * that's how services are typically provided to components.
  */
-@Injectable({
-  providedIn: AppComponent
-})
-export class MockUserService extends UserService {
-  static testUsers: User[] = [
+@Service()
+export class MockUserService implements Pick<
+  UserService,
+  'getUsers' | 'getUserById' | 'addUser' | 'filterUsers'
+> {
+  static testUsers = [
     {
       _id: 'chris_id',
       name: 'Chris',
@@ -21,7 +21,8 @@ export class MockUserService extends UserService {
       company: 'UMM',
       email: 'chris@this.that',
       role: 'admin',
-      avatar: 'https://gravatar.com/avatar/8c9616d6cc5de638ea6920fb5d65fc6c?d=identicon'
+      avatar:
+        'https://gravatar.com/avatar/8c9616d6cc5de638ea6920fb5d65fc6c?d=identicon',
     },
     {
       _id: 'pat_id',
@@ -30,7 +31,8 @@ export class MockUserService extends UserService {
       company: 'IBM',
       email: 'pat@something.com',
       role: 'editor',
-      avatar: 'https://gravatar.com/avatar/b42a11826c3bde672bce7e06ad729d44?d=identicon'
+      avatar:
+        'https://gravatar.com/avatar/b42a11826c3bde672bce7e06ad729d44?d=identicon',
     },
     {
       _id: 'jamie_id',
@@ -39,19 +41,20 @@ export class MockUserService extends UserService {
       company: 'Frogs, Inc.',
       email: 'jamie@frogs.com',
       role: 'viewer',
-      avatar: 'https://gravatar.com/avatar/d4a6c71dd9470ad4cf58f78c100258bf?d=identicon'
-    }
-  ];
-
-  constructor() {
-    super(null);
-  }
+      avatar:
+        'https://gravatar.com/avatar/d4a6c71dd9470ad4cf58f78c100258bf?d=identicon',
+    },
+  ] as const satisfies User[];
 
   // skipcq: JS-0105
   // It's OK that the `_filters` argument isn't used here, so we'll disable
   // this warning for just his function.
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  getUsers(_filters: { role?: UserRole; age?: number; company?: string }): Observable<User[]> {
+  /* eslint-disable @typescript-eslint/no-unused-vars */
+  getUsers(_filters: {
+    role?: UserRole;
+    age?: number;
+    company?: string;
+  }): Observable<User[]> {
     // Our goal here isn't to test (and thus rewrite) the service, so we'll
     // keep it simple and just return the test users regardless of what
     // filters are passed in.
@@ -72,7 +75,23 @@ export class MockUserService extends UserService {
     } else if (id === MockUserService.testUsers[1]._id) {
       return of(MockUserService.testUsers[1]);
     } else {
-      return of(null);
+      return of<User>();
     }
+  }
+
+  addUser(newUser: Partial<User>): Observable<string> {
+    // Send post request to add a new user with the user data as the body.
+    // `res.id` should be the MongoDB ID of the newly added `User`.
+    return of('');
+  }
+
+  filterUsers(
+    users: User[],
+    filters: {
+      name?: string;
+      company?: string;
+    },
+  ): User[] {
+    return [];
   }
 }
