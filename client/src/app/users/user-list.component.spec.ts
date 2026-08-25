@@ -141,6 +141,8 @@ describe('Misbehaving User List', () => {
           useValue: userServiceStub,
         },
         provideRouter([]),
+        provideHttpClient(withXhr()),
+        provideHttpClientTesting(),
       ],
     }).compileComponents();
   });
