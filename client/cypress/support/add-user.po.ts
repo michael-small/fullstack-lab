@@ -33,10 +33,8 @@ export class AddUserPage {
   }
 
   getFormField(fieldName: string) {
-    // TODO - better selector?
-    return cy.get(`${this.formFieldSelector} [name=ng.form1.${fieldName}]`);
+    return cy.get(`[name="${fieldName}"]`);
   }
-
   getSnackBar() {
     // Since snackBars are often shown in response to errors,
     // we'll add a timeout of 10 seconds to help increase the likelihood that
