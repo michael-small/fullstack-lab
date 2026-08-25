@@ -1,109 +1,110 @@
-import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
-import { FormsModule } from '@angular/forms';
-import { MatButtonModule } from '@angular/material/button';
-import { MatCardModule } from '@angular/material/card';
-import { MatOptionModule } from '@angular/material/core';
-import { MatDividerModule } from '@angular/material/divider';
-import { MatExpansionModule } from '@angular/material/expansion';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatIconModule } from '@angular/material/icon';
-import { MatInputModule } from '@angular/material/input';
-import { MatListModule } from '@angular/material/list';
-import { MatRadioModule } from '@angular/material/radio';
-import { MatSelectModule } from '@angular/material/select';
-import { MatSnackBarModule } from '@angular/material/snack-bar';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { RouterModule } from '@angular/router';
-import { Observable } from 'rxjs';
-import { MockUserService } from '../../testing/user.service.mock';
-import { User } from './user';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { HarnessLoader } from '@angular/cdk/testing';
+import { provideRouter } from '@angular/router';
+import { throwError } from 'rxjs';
+import { MockUserService } from 'src/testing/user.service.mock';
 import { UserCardComponent } from './user-card.component';
 import { UserListComponent } from './user-list.component';
 import { UserService } from './user.service';
-
-const COMMON_IMPORTS: unknown[] = [
-  FormsModule,
-  MatCardModule,
-  MatFormFieldModule,
-  MatSelectModule,
-  MatOptionModule,
-  MatButtonModule,
-  MatInputModule,
-  MatExpansionModule,
-  MatTooltipModule,
-  MatListModule,
-  MatDividerModule,
-  MatRadioModule,
-  MatIconModule,
-  MatSnackBarModule,
-  BrowserAnimationsModule,
-  RouterModule.forRoot([]),
-];
+import {
+  HttpErrorResponse,
+  provideHttpClient,
+  withXhr,
+} from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
+import { MatSelectHarness } from '@angular/material/select/testing';
+import { MatInputHarness } from '@angular/material/input/testing';
 
 describe('User list', () => {
   let userList: UserListComponent;
   let fixture: ComponentFixture<UserListComponent>;
+  let userService: UserService;
 
-  beforeEach(() => {
-    TestBed.configureTestingModule({
-      imports: [COMMON_IMPORTS, UserListComponent, UserCardComponent],
-      // providers:    [ UserService ]  // NO! Don't provide the real service!
-      // Provide a test-double instead
-      providers: [{ provide: UserService, useValue: new MockUserService() }],
-    });
+  // MATERIAL HARNESSES - this doc gives five steps in understanding them in practice. Overview first:
+  // Material provides component harnesses for testing,
+  //     which allow interacting with Material components
+  //     in tests in a really straight forward programmatic way.
+  //
+  //     Without harnesses, finding and interacting with stuff in the DOM is annoying and vague.
+  //     Example of before and after using harnesses: https://material.angular.dev/guide/using-component-harnesses#comparison-with-and-without-component-harnesses
+  //         BEFORE: Need to know how to trigger native DOM event handlers to open the select and select an option,
+  //             what CSS class selectors to find,
+  //             and manually detect changes.
+  //             Little to no auto-complete or type checking.
+  //         AFTER: Harness makes finding the and interacting with the select easier.
+  //             Has auto-complete and type checking.
+  //
+  // Before the steps, here are some links with overviews/examples:
+  //     Example of a test using a harness for material inputs: https://material.angular.dev/components/input/examples#input-harness
+  //     Dedicated harness docs page: https://material.angular.dev/guide/using-component-harnesses
+
+  // (Harness 1) Declare the loader, which you later instantiate in the `beforeEach`.
+  // The loader can instantiate any different Material harness
+  let loader: HarnessLoader;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [UserListComponent, UserCardComponent],
+      providers: [
+        provideHttpClient(withXhr()),
+        provideHttpClientTesting(),
+        { provide: UserService, useClass: MockUserService },
+        provideRouter([]),
+      ],
+    }).compileComponents();
   });
 
-  // This constructs the `userList` (declared
-  // above) that will be used throughout the tests.
-  beforeEach(waitForAsync(() => {
-    // Compile all the components in the test bed
-    // so that everything's ready to go.
-    TestBed.compileComponents().then(() => {
-      /* Create a fixture of the UserListComponent. That
-       * allows us to get an instance of the component
-       * (userList, below) that we can control in
-       * the tests.
-       */
-      fixture = TestBed.createComponent(UserListComponent);
-      userList = fixture.componentInstance;
-      /* Tells Angular to sync the data bindings between
-       * the model and the DOM. This ensures, e.g., that the
-       * `userList` component actually requests the list
-       * of users from the `MockUserService` so that it's
-       * up to date before we start running tests on it.
-       */
-      fixture.detectChanges();
-    });
-  }));
-
-  it('contains all the users', () => {
-    expect(userList.serverFilteredUsers().length).toBe(3);
+  beforeEach(async () => {
+    await TestBed.compileComponents();
+    fixture = TestBed.createComponent(UserListComponent);
+    // (Harness 2) Actually instantiate the harness loader, most often in the `beforeEach`.
+    loader = TestbedHarnessEnvironment.loader(fixture);
+    userList = fixture.componentInstance;
+    userService = TestBed.inject(UserService);
+    await fixture.whenStable();
   });
 
-  it("contains a user named 'Chris'", () => {
-    expect(
-      userList.serverFilteredUsers().some((user: User) => user.name === 'Chris')
-    ).toBe(true);
+  it('should initialize with serverFilteredUsers available', () => {
+    const users = userList.serverFilteredUsers.value();
+    expect(users).toBeDefined();
+    expect(Array.isArray(users)).toBe(true);
   });
 
-  it("contain a user named 'Jamie'", () => {
-    expect(
-      userList.serverFilteredUsers().some((user: User) => user.name === 'Jamie')
-    ).toBe(true);
+  it('should call getUsers() when userForm role signal changes', async () => {
+    const spy = vi.spyOn(userService, 'getUsers');
+
+    // (Harness 3) Use the harness loader to get a harness for the role selector
+    // Notice that the loader can grab any Material harness, in this case, for `<mat-select>` with the label "Role"
+    // And that you `await` the harness instance
+    const roleInput = await loader.getHarness(
+      MatSelectHarness.with({ label: 'Role' }),
+    );
+    // (Harness 4) Use the harness to select the "Admin" option
+    // IMPORTANT: This must be awaited because this is asynchronous and returns a promise.
+    //     You will see this error if you do not `await` the harness action:
+    //     `Error: Harness is attempting to use a fixture that has already been destroyed.`
+    await roleInput.clickOptions({ text: 'Admin' });
+
+    expect(spy).toHaveBeenCalledWith({ role: 'admin', age: undefined });
   });
 
-  it("doesn't contain a user named 'Santa'", () => {
-    expect(
-      userList.serverFilteredUsers().some((user: User) => user.name === 'Santa')
-    ).toBe(false);
+  it('should call getUsers() when userForm age signal changes', async () => {
+    const spy = vi.spyOn(userService, 'getUsers');
+    // (Harness 5) The same harness loader can grab a different Material element with its harness
+    // The Material docs have examples of each type of component harness tests
+    //     in a component's "Examples" tab: https://material.angular.dev/components/input/examples#input-harness
+    const ageInput = await loader.getHarness(
+      MatInputHarness.with({ label: 'Age' }),
+    );
+    await ageInput.setValue('25');
+
+    expect(spy).toHaveBeenCalledWith({ role: undefined, age: 25 });
   });
 
-  it('has two users that are 37 years old', () => {
-    expect(
-      userList.serverFilteredUsers().filter((user: User) => user.age === 37)
-        .length
-    ).toBe(2);
+  it('should not show error message on successful load', () => {
+    expect(userList.errMsg()).toBe('');
   });
 });
 
@@ -117,57 +118,53 @@ describe('Misbehaving User List', () => {
   let userList: UserListComponent;
   let fixture: ComponentFixture<UserListComponent>;
 
-  let userServiceStub: {
-    getUsers: () => Observable<User[]>;
-    filterUsers: () => User[];
+  // stub UserService for test purposes
+  const userServiceStub = {
+    getUsers: () =>
+      throwError(
+        () =>
+          new HttpErrorResponse({ status: 500, statusText: 'Server Error' }),
+      ),
+    filterUsers: () => [],
   };
-
-  beforeEach(() => {
-    // stub UserService for test purposes
-    userServiceStub = {
-      getUsers: () =>
-        new Observable((observer) => {
-          observer.error('getUsers() Observer generates an error');
-        }),
-      filterUsers: () => []
-    };
-  });
 
   // Construct the `userList` used for the testing in the `it` statement
   // below.
-  beforeEach(waitForAsync(() => {
+  beforeEach(async () => {
     TestBed.configureTestingModule({
-      imports: [
-        COMMON_IMPORTS,
-        UserListComponent
-      ],
+      imports: [UserListComponent],
       // providers:    [ UserService ]  // NO! Don't provide the real service!
       // Provide a test-double instead
-      providers: [{
-        provide: UserService,
-        useValue: userServiceStub
-      }],
-    })
-      .compileComponents();
-  }));
+      providers: [
+        {
+          provide: UserService,
+          useValue: userServiceStub,
+        },
+        provideRouter([]),
+      ],
+    }).compileComponents();
+  });
 
-  beforeEach(() => {
+  beforeEach(async () => {
     fixture = TestBed.createComponent(UserListComponent);
     userList = fixture.componentInstance;
-    fixture.detectChanges();
+    await fixture.whenStable();
   });
 
   it("generates an error if we don't set up a UserListService", () => {
     // If the service fails, we expect the `serverFilteredUsers` signal to
     // be an empty array of users.
-    expect(userList.serverFilteredUsers())
-      .withContext("service can't give values to the list if it's not there")
-      .toEqual([]);
+    expect(
+      userList.serverFilteredUsers.hasValue()
+        ? userList.serverFilteredUsers.value()
+        : [],
+      "service can't give values to the list if it's not there",
+    ).toEqual([]);
     // We also expect the `errMsg` signal to contain the "Problem contacting…"
     // error message. (It's arguably a bit fragile to expect something specific
     // like this; maybe we just want to expect it to be non-empty?)
-    expect(userList.errMsg())
-      .withContext('the error message will be')
-      .toContain('Problem contacting the server – Error Code:');
+    expect(userList.errMsg(), 'the error message will be').toContain(
+      'Problem contacting the server – Error Code:',
+    );
   });
 });

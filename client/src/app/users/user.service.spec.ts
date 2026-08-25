@@ -1,6 +1,15 @@
-import { HttpClient, HttpParams, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
-import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { TestBed, waitForAsync } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  HttpClient,
+  HttpParams,
+  provideHttpClient,
+  withXhr,
+} from '@angular/common/http';
+import {
+  HttpTestingController,
+  provideHttpClientTesting,
+} from '@angular/common/http/testing';
+import { TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { User } from './user';
 import { UserService } from './user.service';
@@ -16,7 +25,8 @@ describe('UserService', () => {
       company: 'UMM',
       email: 'chris@this.that',
       role: 'admin',
-      avatar: 'https://gravatar.com/avatar/8c9616d6cc5de638ea6920fb5d65fc6c?d=identicon'
+      avatar:
+        'https://gravatar.com/avatar/8c9616d6cc5de638ea6920fb5d65fc6c?d=identicon',
     },
     {
       _id: 'pat_id',
@@ -25,7 +35,8 @@ describe('UserService', () => {
       company: 'IBM',
       email: 'pat@something.com',
       role: 'editor',
-      avatar: 'https://gravatar.com/avatar/b42a11826c3bde672bce7e06ad729d44?d=identicon'
+      avatar:
+        'https://gravatar.com/avatar/b42a11826c3bde672bce7e06ad729d44?d=identicon',
     },
     {
       _id: 'jamie_id',
@@ -34,21 +45,25 @@ describe('UserService', () => {
       company: 'Frogs, Inc.',
       email: 'jamie@frogs.com',
       role: 'viewer',
-      avatar: 'https://gravatar.com/avatar/d4a6c71dd9470ad4cf58f78c100258bf?d=identicon'
-    }
+      avatar:
+        'https://gravatar.com/avatar/d4a6c71dd9470ad4cf58f78c100258bf?d=identicon',
+    },
   ];
   // A small collection of users organized by company
   const testCompanies: Company[] = [
     {
       _id: 'company1',
       count: 1,
-      users: [{_id: 'user1', name: 'User 1'}]
+      users: [{ _id: 'user1', name: 'User 1' }],
     },
     {
       _id: 'company2',
       count: 2,
-      users: [{_id: 'user2', name: 'User 2'}, {_id: 'user3', name: 'User 3'}]
-    }
+      users: [
+        { _id: 'user2', name: 'User 2' },
+        { _id: 'user3', name: 'User 3' },
+      ],
+    },
   ];
   let userService: UserService;
   // These are used to mock the HTTP requests so that we (a) don't have to
@@ -61,13 +76,13 @@ describe('UserService', () => {
     // Set up the mock handling of the HTTP requests
     TestBed.configureTestingModule({
       imports: [],
-      providers: [provideHttpClient(withInterceptorsFromDi()), provideHttpClientTesting()]
+      providers: [provideHttpClient(withXhr()), provideHttpClientTesting()],
     });
     // Construct an instance of the service with the mock
     // HTTP client.
     httpClient = TestBed.inject(HttpClient);
     httpTestingController = TestBed.inject(HttpTestingController);
-    userService = new UserService(httpClient);
+    userService = TestBed.inject(UserService);
   });
 
   afterEach(() => {
@@ -76,46 +91,49 @@ describe('UserService', () => {
   });
 
   describe('When getCompanies() is called with no parameters', () => {
-    it('calls `api/usersByCompany`', waitForAsync(() => {
+    it('calls `api/usersByCompany`', async () => {
       // Mock the `httpClient.get()` method, so that instead of making an HTTP request,
       // it just returns our test data.
-      const mockedMethod = spyOn(httpClient, 'get').and.returnValue(of(testCompanies));
+      const mockedMethod = vi
+        .spyOn(httpClient, 'get')
+        .mockReturnValue(of(testCompanies));
 
       userService.getCompanies().subscribe(() => {
         // The mocked method (`httpClient.get()`) should have been called
         // exactly one time.
-        expect(mockedMethod)
-          .withContext('one call')
-          .toHaveBeenCalledTimes(1);
-        expect(mockedMethod)
-          .withContext('talks to the correct endpoint')
-          .toHaveBeenCalledWith(userService.usersByCompanyUrl);
+        expect(mockedMethod, 'one call').toHaveBeenCalledTimes(1);
+        expect(
+          mockedMethod,
+          'talks to the correct endpoint',
+        ).toHaveBeenCalledWith(userService.usersByCompanyUrl);
       });
-    }));
+    });
   });
 
   describe('When getUsers() is called with no parameters', () => {
     /* We really don't care what `getUsers()` returns. Since all the
-    * filtering (when there is any) is happening on the server,
-    * `getUsers()` is really just a "pass through" that returns whatever it receives,
-    * without any "post processing" or manipulation. The test in this
-    * `describe` confirms that the HTTP request is properly formed
-    * and sent out in the world, but we don't _really_ care about
-    * what `getUsers()` returns as long as it's what the HTTP
-    * request returns.
-    *
-    * So in this test, we'll keep it simple and have
-    * the (mocked) HTTP request return the entire list `testUsers`
-    * even though in "real life" we would expect the server to
-    * return return a filtered subset of the users. Furthermore, we
-    * won't actually check what got returned (there won't be an `expect`
-    * about the returned value). Since we don't use the returned value in this test,
-    * It might also be fine to not bother making the mock return it.
-    */
-    it('calls `api/users`', waitForAsync(() => {
+     * filtering (when there is any) is happening on the server,
+     * `getUsers()` is really just a "pass through" that returns whatever it receives,
+     * without any "post processing" or manipulation. The test in this
+     * `describe` confirms that the HTTP request is properly formed
+     * and sent out in the world, but we don't _really_ care about
+     * what `getUsers()` returns as long as it's what the HTTP
+     * request returns.
+     *
+     * So in this test, we'll keep it simple and have
+     * the (mocked) HTTP request return the entire list `testUsers`
+     * even though in "real life" we would expect the server to
+     * return return a filtered subset of the users. Furthermore, we
+     * won't actually check what got returned (there won't be an `expect`
+     * about the returned value). Since we don't use the returned value in this test,
+     * It might also be fine to not bother making the mock return it.
+     */
+    it('calls `api/users`', async () => {
       // Mock the `httpClient.get()` method, so that instead of making an HTTP request,
       // it just returns our test data.
-      const mockedMethod = spyOn(httpClient, 'get').and.returnValue(of(testUsers));
+      const mockedMethod = vi
+        .spyOn(httpClient, 'get')
+        .mockReturnValue(of(testUsers));
 
       // Call `userService.getUsers()` and confirm that the correct call has
       // been made with the correct arguments.
@@ -126,129 +144,137 @@ describe('UserService', () => {
       userService.getUsers().subscribe(() => {
         // The mocked method (`httpClient.get()`) should have been called
         // exactly one time.
-        expect(mockedMethod)
-          .withContext('one call')
-          .toHaveBeenCalledTimes(1);
+        expect(mockedMethod, 'one call').toHaveBeenCalledTimes(1);
         // The mocked method should have been called with two arguments:
         //   * the appropriate URL ('/api/users' defined in the `UserService`)
         //   * An options object containing an empty `HttpParams`
-        expect(mockedMethod)
-          .withContext('talks to the correct endpoint')
-          .toHaveBeenCalledWith(userService.userUrl, { params: new HttpParams() });
+        expect(
+          mockedMethod,
+          'talks to the correct endpoint',
+        ).toHaveBeenCalledWith(userService.userUrl, {
+          params: new HttpParams(),
+        });
       });
-    }));
+    });
   });
 
   describe('When getUsers() is called with parameters, it correctly forms the HTTP request (Javalin/Server filtering)', () => {
     /*
-    * As in the test of `getUsers()` that takes in no filters in the params,
-    * we really don't care what `getUsers()` returns in the cases
-    * where the filtering is happening on the server. Since all the
-    * filtering is happening on the server, `getUsers()` is really
-    * just a "pass through" that returns whatever it receives, without
-    * any "post processing" or manipulation. So the tests in this
-    * `describe` block all confirm that the HTTP request is properly formed
-    * and sent out in the world, but don't _really_ care about
-    * what `getUsers()` returns as long as it's what the HTTP
-    * request returns.
-    *
-    * So in each of these tests, we'll keep it simple and have
-    * the (mocked) HTTP request return the entire list `testUsers`
-    * even though in "real life" we would expect the server to
-    * return return a filtered subset of the users. Furthermore, we
-    * won't actually check what got returned (there won't be an `expect`
-    * about the returned value).
-    */
+     * As in the test of `getUsers()` that takes in no filters in the params,
+     * we really don't care what `getUsers()` returns in the cases
+     * where the filtering is happening on the server. Since all the
+     * filtering is happening on the server, `getUsers()` is really
+     * just a "pass through" that returns whatever it receives, without
+     * any "post processing" or manipulation. So the tests in this
+     * `describe` block all confirm that the HTTP request is properly formed
+     * and sent out in the world, but don't _really_ care about
+     * what `getUsers()` returns as long as it's what the HTTP
+     * request returns.
+     *
+     * So in each of these tests, we'll keep it simple and have
+     * the (mocked) HTTP request return the entire list `testUsers`
+     * even though in "real life" we would expect the server to
+     * return return a filtered subset of the users. Furthermore, we
+     * won't actually check what got returned (there won't be an `expect`
+     * about the returned value).
+     */
 
-    it('correctly calls api/users with filter parameter \'admin\'', () => {
-      const mockedMethod = spyOn(httpClient, 'get').and.returnValue(of(testUsers));
+    it("correctly calls api/users with filter parameter 'admin'", () => {
+      const mockedMethod = vi
+        .spyOn(httpClient, 'get')
+        .mockReturnValue(of(testUsers));
 
       userService.getUsers({ role: 'admin' }).subscribe(() => {
-        expect(mockedMethod)
-          .withContext('one call')
-          .toHaveBeenCalledTimes(1);
+        expect(mockedMethod, 'one call').toHaveBeenCalledTimes(1);
         // The mocked method should have been called with two arguments:
         //   * the appropriate URL ('/api/users' defined in the `UserService`)
         //   * An options object containing an `HttpParams` with the `role`:`admin`
         //     key-value pair.
-        expect(mockedMethod)
-          .withContext('talks to the correct endpoint')
-          .toHaveBeenCalledWith(userService.userUrl, { params: new HttpParams().set('role', 'admin') });
+        expect(
+          mockedMethod,
+          'talks to the correct endpoint',
+        ).toHaveBeenCalledWith(userService.userUrl, {
+          params: new HttpParams().set('role', 'admin'),
+        });
       });
     });
 
-    it('correctly calls api/users with filter parameter \'age\'', () => {
-      const mockedMethod = spyOn(httpClient, 'get').and.returnValue(of(testUsers));
+    it("correctly calls api/users with filter parameter 'age'", () => {
+      const mockedMethod = vi
+        .spyOn(httpClient, 'get')
+        .mockReturnValue(of(testUsers));
 
       userService.getUsers({ age: 25 }).subscribe(() => {
-        expect(mockedMethod)
-          .withContext('one call')
-          .toHaveBeenCalledTimes(1);
-        expect(mockedMethod)
-          .withContext('talks to the correct endpoint')
-          .toHaveBeenCalledWith(userService.userUrl, { params: new HttpParams().set('age', '25') });
+        expect(mockedMethod, 'one call').toHaveBeenCalledTimes(1);
+        expect(
+          mockedMethod,
+          'talks to the correct endpoint',
+        ).toHaveBeenCalledWith(userService.userUrl, {
+          params: new HttpParams().set('age', '25'),
+        });
       });
     });
 
     it('correctly calls api/users with multiple filter parameters', () => {
-      const mockedMethod = spyOn(httpClient, 'get').and.returnValue(of(testUsers));
+      const mockedMethod = vi
+        .spyOn(httpClient, 'get')
+        .mockReturnValue(of(testUsers));
 
-      userService.getUsers({ role: 'editor', company: 'IBM', age: 37 }).subscribe(() => {
-        // This test checks that the call to `userService.getUsers()` does several things:
-        //   * It calls the mocked method (`HttpClient#get()`) exactly once.
-        //   * It calls it with the correct endpoint (`userService.userUrl`).
-        //   * It calls it with the correct parameters:
-        //      * There should be three parameters (this makes sure that there aren't extras).
-        //      * There should be a "role:editor" key-value pair.
-        //      * And a "company:IBM" pair.
-        //      * And a "age:37" pair.
+      userService
+        .getUsers({ role: 'editor', company: 'IBM', age: 37 })
+        .subscribe(() => {
+          // This test checks that the call to `userService.getUsers()` does several things:
+          //   * It calls the mocked method (`HttpClient#get()`) exactly once.
+          //   * It calls it with the correct endpoint (`userService.userUrl`).
+          //   * It calls it with the correct parameters:
+          //      * There should be three parameters (this makes sure that there aren't extras).
+          //      * There should be a "role:editor" key-value pair.
+          //      * And a "company:IBM" pair.
+          //      * And a "age:37" pair.
 
-        // This gets the arguments for the first (and in this case only) call to the `mockMethod`.
-        const [url, options] = mockedMethod.calls.argsFor(0);
-        // Gets the `HttpParams` from the options part of the call.
-        // `options.param` can return any of a broad number of types;
-        // it is in fact an instance of `HttpParams`, and I need to use
-        // that fact, so I'm casting it (the `as HttpParams` bit).
-        const calledHttpParams: HttpParams = (options.params) as HttpParams;
-        expect(mockedMethod)
-          .withContext('one call')
-          .toHaveBeenCalledTimes(1);
-        expect(url)
-          .withContext('talks to the correct endpoint')
-          .toEqual(userService.userUrl);
-        expect(calledHttpParams.keys().length)
-          .withContext('should have 3 params')
-          .toEqual(3);
-        expect(calledHttpParams.get('role'))
-          .withContext('role of editor')
-          .toEqual('editor');
-        expect(calledHttpParams.get('company'))
-          .withContext('company being IBM')
-          .toEqual('IBM');
-        expect(calledHttpParams.get('age'))
-          .withContext('age being 37')
-          .toEqual('37');
-      });
+          // This gets the arguments for the first (and in this case only) call to the `mockMethod`.
+          const [url, options] = vi.mocked(mockedMethod).mock.calls[0];
+          // Gets the `HttpParams` from the options part of the call.
+          // `options.param` can return any of a broad number of types;
+          // it is in fact an instance of `HttpParams`, and I need to use
+          // that fact, so I'm casting it (the `as HttpParams` bit).
+          const calledHttpParams: HttpParams = options?.params as HttpParams;
+          expect(mockedMethod, 'one call').toHaveBeenCalledTimes(1);
+          expect(url, 'talks to the correct endpoint').toEqual(
+            userService.userUrl,
+          );
+          expect(
+            calledHttpParams.keys().length,
+            'should have 3 params',
+          ).toEqual(3);
+          expect(calledHttpParams.get('role'), 'role of editor').toEqual(
+            'editor',
+          );
+          expect(calledHttpParams.get('company'), 'company being IBM').toEqual(
+            'IBM',
+          );
+          expect(calledHttpParams.get('age'), 'age being 37').toEqual('37');
+        });
     });
   });
 
   describe('When getUserById() is given an ID', () => {
     /* We really don't care what `getUserById()` returns. Since all the
-    * interesting work is happening on the server, `getUserById()`
-    * is really just a "pass through" that returns whatever it receives,
-    * without any "post processing" or manipulation. The test in this
-    * `describe` confirms that the HTTP request is properly formed
-    * and sent out in the world, but we don't _really_ care about
-    * what `getUserById()` returns as long as it's what the HTTP
-    * request returns.
-    *
-    * So in this test, we'll keep it simple and have
-    * the (mocked) HTTP request return the `targetUser`
-    * Furthermore, we won't actually check what got returned (there won't be an `expect`
-    * about the returned value). Since we don't use the returned value in this test,
-    * It might also be fine to not bother making the mock return it.
-    */
-    it('calls api/users/id with the correct ID', waitForAsync(() => {
+     * interesting work is happening on the server, `getUserById()`
+     * is really just a "pass through" that returns whatever it receives,
+     * without any "post processing" or manipulation. The test in this
+     * `describe` confirms that the HTTP request is properly formed
+     * and sent out in the world, but we don't _really_ care about
+     * what `getUserById()` returns as long as it's what the HTTP
+     * request returns.
+     *
+     * So in this test, we'll keep it simple and have
+     * the (mocked) HTTP request return the `targetUser`
+     * Furthermore, we won't actually check what got returned (there won't be an `expect`
+     * about the returned value). Since we don't use the returned value in this test,
+     * It might also be fine to not bother making the mock return it.
+     */
+    it('calls api/users/id with the correct ID', async () => {
       // We're just picking a User "at random" from our little
       // set of Users up at the top.
       const targetUser: User = testUsers[1];
@@ -256,7 +282,9 @@ describe('UserService', () => {
 
       // Mock the `httpClient.get()` method so that instead of making an HTTP request
       // it just returns one user from our test data
-      const mockedMethod = spyOn(httpClient, 'get').and.returnValue(of(targetUser));
+      const mockedMethod = vi
+        .spyOn(httpClient, 'get')
+        .mockReturnValue(of(targetUser));
 
       // Call `userService.getUser()` and confirm that the correct call has
       // been made with the correct arguments.
@@ -267,14 +295,13 @@ describe('UserService', () => {
       userService.getUserById(targetId).subscribe(() => {
         // The `User` returned by `getUserById()` should be targetUser, but
         // we don't bother with an `expect` here since we don't care what was returned.
-        expect(mockedMethod)
-          .withContext('one call')
-          .toHaveBeenCalledTimes(1);
-        expect(mockedMethod)
-          .withContext('talks to the correct endpoint')
-          .toHaveBeenCalledWith(`${userService.userUrl}/${targetId}`);
+        expect(mockedMethod, 'one call').toHaveBeenCalledTimes(1);
+        expect(
+          mockedMethod,
+          'talks to the correct endpoint',
+        ).toHaveBeenCalledWith(`${userService.userUrl}/${targetId}`);
       });
-    }));
+    });
   });
 
   describe('Filtering on the client using `filterUsers()` (Angular/Client filtering)', () => {
@@ -288,23 +315,27 @@ describe('UserService', () => {
      */
     it('filters by name', () => {
       const userName = 'i';
-      const filteredUsers = userService.filterUsers(testUsers, { name: userName });
+      const filteredUsers = userService.filterUsers(testUsers, {
+        name: userName,
+      });
       // There should be two users with an 'i' in their
       // name: Chris and Jamie.
       expect(filteredUsers.length).toBe(2);
       // Every returned user's name should contain an 'i'.
-      filteredUsers.forEach(user => {
+      filteredUsers.forEach((user) => {
         expect(user.name.indexOf(userName)).toBeGreaterThanOrEqual(0);
       });
     });
 
     it('filters by company', () => {
       const userCompany = 'UMM';
-      const filteredUsers = userService.filterUsers(testUsers, { company: userCompany });
+      const filteredUsers = userService.filterUsers(testUsers, {
+        company: userCompany,
+      });
       // There should be just one user that has UMM as their company.
       expect(filteredUsers.length).toBe(1);
       // Every returned user's company should contain 'UMM'.
-      filteredUsers.forEach(user => {
+      filteredUsers.forEach((user) => {
         expect(user.company.indexOf(userCompany)).toBeGreaterThanOrEqual(0);
       });
     });
@@ -322,7 +353,7 @@ describe('UserService', () => {
       // There should be just one user with these properties.
       expect(filteredUsers.length).toBe(1);
       // Every returned user should have _both_ these properties.
-      filteredUsers.forEach(user => {
+      filteredUsers.forEach((user) => {
         expect(user.name.indexOf(userName)).toBeGreaterThanOrEqual(0);
         expect(user.company.indexOf(userCompany)).toBeGreaterThanOrEqual(0);
       });
@@ -330,25 +361,24 @@ describe('UserService', () => {
   });
 
   describe('Adding a user using `addUser()`', () => {
-    it('talks to the right endpoint and is called once', waitForAsync(() => {
+    it('talks to the right endpoint and is called once', async () => {
       const user_id = 'pat_id';
-      const expected_http_response = { id: user_id } ;
+      const expected_http_response = { id: user_id };
 
       // Mock the `httpClient.addUser()` method, so that instead of making an HTTP request,
       // it just returns our expected HTTP response.
-      const mockedMethod = spyOn(httpClient, 'post')
-        .and
-        .returnValue(of(expected_http_response));
+      const mockedMethod = vi
+        .spyOn(httpClient, 'post')
+        .mockReturnValue(of(expected_http_response));
 
       userService.addUser(testUsers[1]).subscribe((new_user_id) => {
         expect(new_user_id).toBe(user_id);
-        expect(mockedMethod)
-          .withContext('one call')
-          .toHaveBeenCalledTimes(1);
-        expect(mockedMethod)
-          .withContext('talks to the correct endpoint')
-          .toHaveBeenCalledWith(userService.userUrl, testUsers[1]);
+        expect(mockedMethod, 'one call').toHaveBeenCalledTimes(1);
+        expect(
+          mockedMethod,
+          'talks to the correct endpoint',
+        ).toHaveBeenCalledWith(userService.userUrl, testUsers[1]);
       });
-    }));
+    });
   });
 });

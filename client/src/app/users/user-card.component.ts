@@ -10,10 +10,15 @@ import { User } from './user';
   selector: 'app-user-card',
   templateUrl: './user-card.component.html',
   styleUrls: ['./user-card.component.scss'],
-  imports: [MatCardModule, MatButtonModule, MatListModule, MatIconModule, RouterLink]
+  imports: [
+    MatCardModule,
+    MatButtonModule,
+    MatListModule,
+    MatIconModule,
+    RouterLink,
+  ],
 })
 export class UserCardComponent {
-
-  user = input.required<User>();
+  user = input.required<User | undefined>();
   simple = input(false);
 }
