@@ -13,7 +13,8 @@
     "importHelpers": true,
     "target": "ES2022",
     "useDefineForClassFields": false,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "rootDir": "."
   },
   "exclude": ["./cypress.config.ts"],
   "angularCompilerOptions": {
