@@ -1,9 +1,4 @@
-import {
-  Component,
-  inject,
-  ChangeDetectionStrategy,
-  computed,
-} from '@angular/core';
+import { Component, inject, computed } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
 import { UserCardComponent } from './user-card.component';
 import { UserService } from './user.service';
@@ -15,7 +10,6 @@ import { MatButtonModule } from '@angular/material/button';
   selector: 'app-user-profile',
   templateUrl: './user-profile.component.html',
   styleUrls: ['./user-profile.component.scss'],
-  changeDetection: ChangeDetectionStrategy.Eager,
   imports: [UserCardComponent, MatCardModule, MatButtonModule],
 })
 export class UserProfileComponent {

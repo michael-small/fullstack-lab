@@ -3,11 +3,9 @@ import {
   computed,
   signal,
   inject,
-  ChangeDetectionStrategy,
   effect,
   ResourceRef,
 } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatOptionModule } from '@angular/material/core';
@@ -20,12 +18,11 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterLink } from '@angular/router';
-import { catchError, combineLatest, of, switchMap, tap } from 'rxjs';
 import { User, UserRole } from './user';
 import { UserCardComponent } from './user-card.component';
 import { UserService } from './user.service';
-import { rxResource, toObservable, toSignal } from '@angular/core/rxjs-interop';
-import { form, FormField, FormRoot, max, min } from '@angular/forms/signals';
+import { rxResource } from '@angular/core/rxjs-interop';
+import { form, FormField, max, min } from '@angular/forms/signals';
 import { HttpErrorResponse } from '@angular/common/http';
 
 /**

@@ -2,7 +2,6 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { CompanyCardComponent } from './company-card.component';
-import { Company } from '../company-list/company';
 
 describe('CompanyCardComponent', () => {
   let component: CompanyCardComponent;

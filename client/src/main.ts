@@ -1,4 +1,3 @@
-import { LayoutModule } from '@angular/cdk/layout';
 import {
   provideHttpClient,
   withInterceptorsFromDi,

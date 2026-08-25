@@ -38,7 +38,7 @@ export class AddUserComponent {
 
   // TODO - use save service and model vs form model
   async onSave() {
-    await submit(this.addUserFormService.addUserForm, async (field) => {
+    await submit(this.addUserFormService.addUserForm, async () => {
       await this.save();
     });
   }

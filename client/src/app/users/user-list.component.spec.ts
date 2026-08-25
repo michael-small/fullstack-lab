@@ -119,7 +119,7 @@ describe('Misbehaving User List', () => {
   let fixture: ComponentFixture<UserListComponent>;
 
   // stub UserService for test purposes
-  let userServiceStub = {
+  const userServiceStub = {
     getUsers: () =>
       throwError(
         () =>

@@ -1,6 +1,5 @@
-import { Injectable, Service } from '@angular/core';
+import { Service } from '@angular/core';
 import { Observable, of } from 'rxjs';
-import { AppComponent } from 'src/app/app.component';
 import { User, UserRole } from '../app/users/user';
 import { UserService } from 'src/app/users/user.service';
 

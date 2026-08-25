@@ -10,7 +10,6 @@ import { UserProfileComponent } from './user-profile.component';
 import { UserService } from './user.service';
 
 describe('UserProfileComponent', async () => {
-  let component: UserProfileComponent;
   let fixture: ComponentFixture<UserProfileComponent>;
   let userService: UserService;
   const chrisId = 'chris_id';
