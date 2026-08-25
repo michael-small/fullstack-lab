@@ -33,7 +33,8 @@ export class AddUserPage {
   }
 
   getFormField(fieldName: string) {
-    return cy.get(`${this.formFieldSelector} [formcontrolname=${fieldName}]`);
+    // TODO - better selector?
+    return cy.get(`${this.formFieldSelector} [name=ng.form1.${fieldName}]`);
   }
 
   getSnackBar() {
